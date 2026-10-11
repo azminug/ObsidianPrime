@@ -6,7 +6,7 @@ function Materials.new(Library)
     local connections, timers = {}, {}
     self.Tokens={WindowRadius=16,CardRadius=12,ControlRadius=8,CapsuleRadius=999,RimTopOpacity=.28,RimBottomOpacity=.09,HoverOpacity=.07,ScrollbarWidth=3}
     self.LockRadius=true
-    local alphas = {Window=.48, Group=.36, Sidebar=.65, Header=.35, Panel=.20, Popup=.08, Control=.35, Recess=.20}
+    local alphas = {Window=.48, Group=.36, Sidebar=.65, Header=.35, Panel=.20, Popup=0, Control=.35, Recess=.20}
     local function animate(object,goals)
         if Library.PrimeMotion then Library.PrimeMotion:To(object,goals,30,1)
         else for key,value in pairs(goals) do object[key]=value end end
@@ -113,6 +113,7 @@ function Materials.new(Library)
         bind(object.MouseEnter,reveal)
     end
     local function color(role)
+        if role=="Popup" then return Color3.fromRGB(35,33,44) end
         local base = (role=="Window" or role=="Sidebar" or role=="Recess") and Library.Scheme.BackgroundColor or Library.Scheme.MainColor
         return base:Lerp(Library.Scheme.FontColor, role=="Sidebar" and 0 or role=="Window" and .09 or .14)
     end

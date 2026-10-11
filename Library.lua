@@ -3662,6 +3662,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
             Box.PopOutPlaceholder = Placeholder
 
             Float = New("Frame", {
+                Name = "PrimePopup",
                 Active = true,
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1,
@@ -3676,6 +3677,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
             FloatScale = New("UIScale", {
                 Parent = Float,
             })
+            New("UICorner", {CornerRadius=UDim.new(0,12), Parent=Float})
             table.insert(Library.Scales, FloatScale)
             FloatScale.Scale = Library.DPIScale - (tonumber(Library.ScalesOffset[FloatScale]) or 0)
 
@@ -16100,6 +16102,7 @@ function Library:_BuildNotificationHistory()
     end
 
     local Holder = New("CanvasGroup", {
+        Name = "PrimePopup",
         AnchorPoint = Vector2.new(0, 0),
         BackgroundColor3 = "BackgroundColor",
         Position = GetNotifyHistoryDefaultPos(),
@@ -16826,9 +16829,12 @@ function Library:CreateWindow(WindowInfo)
         if WindowInfo.Icon then
             local Icon = Library:GetCustomIcon(WindowInfo.Icon)
             WindowIcon = New("ImageLabel", {
+                Name = "PrimeLogo",
                 Size = WindowInfo.IconSize,
                 Parent = TitleHolder,
             })
+            WindowIcon:SetAttribute("ImperiumRadius", 8)
+            New("UICorner", {CornerRadius=UDim.new(0,8), Parent=WindowIcon})
             if Icon then
                 Library:ApplyLucideIcon(WindowIcon, Icon)
             end
@@ -17556,8 +17562,7 @@ function Library:CreateWindow(WindowInfo)
             Padding = UDim.new(0, 6),
             Parent = FooterHolder,
         })
-        FooterHolder:FindFirstChildOfClass("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Left
-        New("UIPadding", {PaddingLeft=UDim.new(0,TabButtonsStyle.Padding+12),
+        New("UIPadding", {PaddingLeft=UDim.new(0,32),
             PaddingRight=UDim.new(0,32),Parent=FooterHolder})
 
         local function AddFooterSegment(Info)
@@ -21815,6 +21820,7 @@ function Library:CreateWindow(WindowInfo)
         }):Play()
 
         DialogFrame = New("TextButton", {
+            Name = "PrimePopup",
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundColor3 = "BackgroundColor",
             Position = UDim2.fromScale(0.5, 0.5),
@@ -21997,7 +22003,7 @@ function Library:CreateWindow(WindowInfo)
 
         function Dialog:Resize()
             local MaxWidth = (MainFrame.AbsoluteSize.X / Library.DPIScale) * 0.75
-            local MinWidth = 400
+            local MinWidth = math.min(Info.Width or 400, MaxWidth)
 
             local TotalButtonWidth = 0
             local ButtonCount = 0

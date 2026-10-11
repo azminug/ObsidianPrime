@@ -1,3 +1,12 @@
+## Imperium 0.10 · 2026-10-11
+
+- Add reusable Interface composition: adaptive native columns, horizontal banners,
+  searchable category browser with tap-to-inspect details and transactional selection.
+- Keep menu, history, dialog and pop-out backplates solid Cosmic in glass mode.
+- Center footer information, round the application logo and allow bounded dialog widths.
+- Preserve all baseline Ultra APIs, native controls, callbacks and config format.
+- Application integrations should pin all modules to `imperium-v0.10.0`.
+
 ## 26.09.2026
 
 ```diff

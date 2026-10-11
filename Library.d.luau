@@ -1348,6 +1348,7 @@ export type Window = {
             AutoDismiss: boolean?,
             OutsideClickDismiss: boolean?,
             FooterButtons: { [string]: DialogButtonInfo }?,
+            Width: number?, -- Preferred logical width, clamped to the window
         }
     ) -> Dialog,
     ChangeTitle: (self: Window, Title: string) -> (),

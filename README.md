@@ -5,7 +5,7 @@ An ObsidianUltra fork for Imperium. Based on
 originally [deividcomsono/Obsidian](https://github.com/deividcomsono/Obsidian).
 Original attribution and LICENSE are preserved.
 
-## Frosted workbench 0.9
+## Frosted workbench 0.10
 
 - Cosmic #23212C, Builder Sans, a window without divider lines, one-pixel specular rims, directional glass shading, and soft card shadows. The window's outer shadow remains off by default.
 - Spring-driven window drag, vertical tab/tabbox fade, group collapse, switches, and scale/fade minimize and restore. Button feedback changes light without shrinking text.
@@ -25,7 +25,7 @@ Roblox does not provide CSS backdrop-filter for this GUI. This build uses tinted
 
 The preview now includes Components, Layouts, Media, Feedback, Key access, and Profiles alongside the Imperium pages. It exercises every native element constructor, including advanced dropdowns, dependencies, pop-outs, key/color pickers, dialogs/loading, floating widgets, and the original ThemeManager/SaveManager tools. Collapse/pop-out defaults are restored. Minimized-label APIs remain visible through capsule details.
 
-`addons/Materials.lua` applies shared, theme-aware glass to existing and lazily created controls, including notification history, context menus, dialogs and pop-outs. `addons/Showcase.lua` organizes the native examples. [FEATURES.md](FEATURES.md) maps capabilities and records actual test coverage.
+`addons/Materials.lua` applies shared, theme-aware glass to existing and lazily created controls, with solid Cosmic backplates for notification history, context menus, dialogs and pop-outs. `addons/Showcase.lua` organizes the native examples. [FEATURES.md](FEATURES.md) maps capabilities and records actual test coverage.
 
 ## Try local edits
 
@@ -50,7 +50,7 @@ demo's prior instance.
 Keep calling the native Library/Window/group methods. `Showcase.lua` is the optional workbench and is not required by an application. Use the tagged build below so later edits to `main` do not change an existing UI:
 
 ```lua
-local repo = "https://raw.githubusercontent.com/azminug/ObsidianPrime/imperium-v0.9.0/"
+local repo = "https://raw.githubusercontent.com/azminug/ObsidianPrime/imperium-v0.10.0/"
 local function loadModule(path)
     local source = game:HttpGet(repo .. path)
     return assert(loadstring(source, "@ObsidianPrime/" .. path))()
@@ -95,3 +95,7 @@ WCAG 2.2 AA remains the target. [ACCESSIBILITY.md](ACCESSIBILITY.md) records cov
 
 Upstream API documentation: https://docs.mspaint.cc/obsidian
 Fork provenance and baseline: [IMPERIUM.md](IMPERIUM.md).
+
+## Application composition 0.10
+
+See [INTERFACE.md](INTERFACE.md) for adaptive columns, horizontal banners, and a searchable item/detail browser that keeps native option persistence. Popup surfaces are solid Cosmic; window glass remains configurable. Footer information is centered.

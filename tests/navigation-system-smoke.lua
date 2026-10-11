@@ -77,7 +77,7 @@ local ok,err=xpcall(function()
                     logoIcon.AbsolutePosition.X+logoIcon.AbsoluteSize.X/2),"logo and sidebar icons share center axis")
             end
             local leading=holder.AbsolutePosition.X+entry.Padding.PaddingLeft.Offset*L.DPIScale
-            check(near(leading,footer.AbsolutePosition.X+footer:FindFirstChildOfClass("UIPadding").PaddingLeft.Offset*L.DPIScale),"sidebar and footer share leading inset")
+            check(footer:FindFirstChildOfClass("UIListLayout").HorizontalAlignment==Enum.HorizontalAlignment.Center,"footer information centered")
             break
         end
     end
