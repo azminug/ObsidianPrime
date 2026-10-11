@@ -444,6 +444,7 @@ local Templates = {
         Title = "Imperium",
         Footer = "ObsidianPrime",
         CopyableFooter = true,
+        LogoOnly = true,
 
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(720, 600),
@@ -564,6 +565,7 @@ local Templates = {
         Description = "Description",
         AutoDismiss = true,
         OutsideClickDismiss = true,
+        InstantOutsideDismiss = false,
         FooterButtons = {}
     },
     Loading = {
@@ -1332,6 +1334,7 @@ local function GetPopOutBodyMaxHeight(Box: any, Reserved: number): number
     local Available = math.min(MaxBottom - Float.AbsolutePosition.Y, ScreenGui.AbsoluteSize.Y * 0.9)
     local ScreenMax = math.max(0, Available / Library.DPIScale - Reserved)
 
+    if Box.PopOutHeight then ScreenMax=math.min(ScreenMax,math.max(0,Box.PopOutHeight-Reserved)) end
     local CustomMax = Box.PopOutMaxHeight
     if typeof(CustomMax) == "number" then
         return math.min(ScreenMax, math.max(0, CustomMax))
@@ -3482,6 +3485,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
         function Box:RefreshPopOutPlaceholder() end
         function Box:SetMaxPopOutHeight(_Height: number?) end
         function Box:SetPopOutWidth(_Width: number?) end
+        function Box:SetPopOutSize(_Width: number, _Height: number) end
         return
     end
 
@@ -3493,6 +3497,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
     local PlaceholderHeader
     local Float
     local FloatScale
+    local CleanupResize
 
     local HandledChildren: { GuiObject } = {}
     local OriginalParents: { [GuiObject]: Instance? } = {}
@@ -3662,7 +3667,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
             Box.PopOutPlaceholder = Placeholder
 
             Float = New("Frame", {
-                Name = "PrimePopup",
+                Name = "PrimeFloatingSurface",
                 Active = true,
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1,
@@ -3696,6 +3701,52 @@ function Library:MakeBoxPopOut(Box: any, Options: {
 
             Box.PopOutFloat = Float
             Box.PoppedOut = true
+            -- A sibling grip stays outside the floating surface's UIListLayout.
+            -- Its lifetime and input subscriptions are owned by this float only.
+            local ResizeGrip=New("TextButton",{Name="PrimePopOutResize",Text="↘",TextSize=18,
+                BackgroundTransparency=1,AnchorPoint=Vector2.new(1,1),Selectable=true,Parent=Floats})
+            Box.PopOutResizeGrip=ResizeGrip
+            local Input,Origin,StartSize
+            local Connections={}
+            local function SyncGrip()
+                if not Float or not Float.Parent then return end
+                local position=Float.AbsolutePosition-Floats.AbsolutePosition+Float.AbsoluteSize
+                ResizeGrip.Position=UDim2.fromOffset(position.X-2,position.Y-2)
+                ResizeGrip.Size=UDim2.fromOffset(32*Library.DPIScale,32*Library.DPIScale)
+                ResizeGrip.ZIndex=Float.ZIndex+1
+                ResizeGrip.Visible=Float.Visible and not Box.Collapsed
+            end
+            for _,property in {"AbsoluteSize","AbsolutePosition","Visible","ZIndex"} do
+                table.insert(Connections,Float:GetPropertyChangedSignal(property):Connect(SyncGrip))
+            end
+            table.insert(Connections,ResizeGrip.InputBegan:Connect(function(input)
+                if IsClickInput(input) then
+                    Input=input;Origin=input.Position;StartSize=Float.AbsoluteSize/Library.DPIScale
+                    RaiseFloat()
+                elseif input.KeyCode==Enum.KeyCode.Right or input.KeyCode==Enum.KeyCode.Left then
+                    Box:SetPopOutSize(Float.AbsoluteSize.X/Library.DPIScale+(input.KeyCode==Enum.KeyCode.Right and 16 or -16),Float.AbsoluteSize.Y/Library.DPIScale)
+                elseif input.KeyCode==Enum.KeyCode.Down or input.KeyCode==Enum.KeyCode.Up then
+                    Box:SetPopOutSize(Float.AbsoluteSize.X/Library.DPIScale,Float.AbsoluteSize.Y/Library.DPIScale+(input.KeyCode==Enum.KeyCode.Down and 16 or -16))
+                end
+            end))
+            table.insert(Connections,UserInputService.InputChanged:Connect(function(input)
+                if not Input or not Float.Visible then return end
+                if input~=Input and input.UserInputType~=Enum.UserInputType.MouseMovement then return end
+                local delta=(input.Position-Origin)/Library.DPIScale
+                Box:SetPopOutSize(StartSize.X+delta.X,StartSize.Y+delta.Y)
+            end))
+            table.insert(Connections,UserInputService.InputEnded:Connect(function(input) if input==Input then Input=nil end end))
+            local cleaned=false
+            CleanupResize=function()
+                if cleaned then return end
+                cleaned=true
+                for _,connection in Connections do connection:Disconnect() end
+                ResizeGrip:Destroy()
+                if Box.PopOutResizeGrip==ResizeGrip then Box.PopOutResizeGrip=nil end
+                Input=nil
+            end
+            Float.Destroying:Once(CleanupResize)
+            SyncGrip()
             SyncPopOutVisibility(Box)
             RaiseFloat()
 
@@ -3742,6 +3793,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
         
         PlaceholderHeader = nil
 
+        if CleanupResize then CleanupResize();CleanupResize=nil end
         if Float then
             Float:Destroy()
             Float = nil
@@ -3785,6 +3837,13 @@ function Library:MakeBoxPopOut(Box: any, Options: {
 
         Box.PopOutWidth = Width
         ApplyPopOutWidth()
+    end
+
+    function Box:SetPopOutSize(Width: number, Height: number)
+        assert(typeof(Width)=="number" and typeof(Height)=="number", "Pop-out size must be numeric")
+        local viewport=Library.ScreenGui.AbsoluteSize/Library.DPIScale
+        Box.PopOutHeight=math.clamp(Height,100,math.max(100,viewport.Y-24))
+        self:SetPopOutWidth(math.clamp(Width,160,math.max(160,viewport.X-24)))
     end
 
     --// Drag Handler
@@ -16811,7 +16870,7 @@ function Library:CreateWindow(WindowInfo)
             Name = "PrimeHeaderTitle",
             AnchorPoint=Vector2.new(0,.5),Position=UDim2.fromOffset(0,24),
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, InitialLeftWidth, 0, 32),
+            Size = UDim2.new(0, InitialLeftWidth, 0, WindowInfo.LogoOnly and 48 or 32),
             Parent = TopBar,
         })
         New("UIListLayout", {
@@ -16825,6 +16884,11 @@ function Library:CreateWindow(WindowInfo)
         New("UIPadding", {PaddingLeft=UDim.new(0,TabButtonsStyle.Padding+21-(WindowInfo.IconSize.Y.Offset/2)),
             PaddingRight=UDim.new(0,TabButtonsStyle.Padding+12),Parent=TitleHolder})
         TitleHolder.ClipsDescendants = true
+        if WindowInfo.LogoOnly then
+            TitleHolder:FindFirstChildOfClass("UIListLayout").HorizontalAlignment=Enum.HorizontalAlignment.Center
+            local padding=TitleHolder:FindFirstChildOfClass("UIPadding")
+            padding.PaddingLeft=UDim.new(0,4);padding.PaddingRight=UDim.new(0,4)
+        end
 
         if WindowInfo.Icon then
             local Icon = Library:GetCustomIcon(WindowInfo.Icon)
@@ -16865,6 +16929,13 @@ function Library:CreateWindow(WindowInfo)
             TextSize = 20,
             Parent = TitleHolder,
         })
+
+        if WindowInfo.LogoOnly then
+            WindowTitle.Visible=false
+            WindowIcon.Visible=true
+            local size=math.clamp(InitialLeftWidth*.2,24,44)
+            WindowIcon.Size=UDim2.fromOffset(size,size)
+        end
 
         --// Top Right Bar \\--
         RightWrapper = New("Frame", {
@@ -17529,7 +17600,7 @@ function Library:CreateWindow(WindowInfo)
             AnchorPoint = Vector2.new(0, 1),
             BackgroundTransparency = 1,
             Position = UDim2.fromScale(0, 1),
-            Size = UDim2.new(1, 0, 0, 20),
+            Size = UDim2.new(1, 0, 0, 32),
             ZIndex = 4,
             Parent = MainFrame,
         })
@@ -17562,8 +17633,8 @@ function Library:CreateWindow(WindowInfo)
             Padding = UDim.new(0, 6),
             Parent = FooterHolder,
         })
-        New("UIPadding", {PaddingLeft=UDim.new(0,32),
-            PaddingRight=UDim.new(0,32),Parent=FooterHolder})
+        New("UIPadding", {PaddingLeft=UDim.new(0,40),
+            PaddingRight=UDim.new(0,40),Parent=FooterHolder})
 
         local function AddFooterSegment(Info)
             local Text = tostring(Info.Text or "")
@@ -17575,8 +17646,8 @@ function Library:CreateWindow(WindowInfo)
                 BackgroundTransparency = 1,
                 Size = UDim2.new(0, 0, 1, 0),
                 Text = Text,
-                TextColor3 = Copyable and "BlueColor" or "FontColor",
-                TextSize = 15,
+                TextColor3 = "FontColor",
+                TextSize = 13,
                 TextTransparency = Copyable and 0 or 0.15,
                 Parent = FooterHolder,
             })
@@ -17615,7 +17686,7 @@ function Library:CreateWindow(WindowInfo)
 
             local CopyImage = New("ImageLabel", {
                 Image = CopyIcon and CopyIcon.Url or "",
-                ImageColor3 = "BlueColor",
+                ImageColor3 = "FontColor",
                 ImageRectOffset = CopyIcon and CopyIcon.ImageRectOffset or Vector2.zero,
                 ImageRectSize = CopyIcon and CopyIcon.ImageRectSize or Vector2.zero,
                 ScaleType = Enum.ScaleType.Fit,
@@ -17791,7 +17862,8 @@ function Library:CreateWindow(WindowInfo)
             CanvasSize = UDim2.fromScale(0, 0),
             Position = UDim2.fromOffset(0, 57),
             ScrollBarThickness = 0,
-            Size = UDim2.new(0, InitialLeftWidth, 1, -78),
+            Size = UDim2.new(0, InitialLeftWidth, 1, -102),
+            ClipsDescendants = true,
             Parent = MainFrame,
         })
         New("UIListLayout", {
@@ -17799,7 +17871,7 @@ function Library:CreateWindow(WindowInfo)
             Parent = Tabs,
         })
         New("UIPadding", {
-            PaddingBottom = UDim.new(0, TabButtonsStyle.Padding),
+            PaddingBottom = UDim.new(0, math.max(12,TabButtonsStyle.Padding)),
             PaddingLeft = UDim.new(0, TabButtonsStyle.Padding),
             PaddingRight = UDim.new(0, TabButtonsStyle.Padding),
             PaddingTop = UDim.new(0, TabButtonsStyle.Padding),
@@ -17816,7 +17888,7 @@ function Library:CreateWindow(WindowInfo)
             ClipsDescendants = true,
             Name = "Container",
             Position = UDim2.new(1, 0, 0, 57),
-            Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -78),
+            Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -94),
             Parent = MainFrame,
         })
         New("UIPadding", {
@@ -18238,9 +18310,9 @@ function Library:CreateWindow(WindowInfo)
         --// Live flag the tooltip gate reads: sidebar hints only show when compact
         Library.SidebarCompacted = IsCompact
 
-        WindowTitle.Visible = not IsCompact
+        WindowTitle.Visible = not WindowInfo.LogoOnly and not IsCompact
         if not WindowInfo.Icon then
-            WindowIcon.Visible = IsCompact
+            WindowIcon.Visible = WindowInfo.LogoOnly or IsCompact
         end
 
         for _, Button in Library.TabButtons do
@@ -18414,13 +18486,17 @@ function Library:CreateWindow(WindowInfo)
 
         DividerLine.Position = UDim2.fromOffset(Width, 0)
 
-        TitleHolder.Size = UDim2.new(0, Width, 0, 32)
+        TitleHolder.Size = UDim2.new(0, Width, 0, WindowInfo.LogoOnly and 48 or 32)
+        if WindowInfo.LogoOnly then
+            local size=math.clamp(Width*.2,24,44)
+            WindowIcon.Size=UDim2.fromOffset(size,size)
+        end
         RightWrapper.Size = UDim2.new(1, -Width - 17 - RightBarInset - 1, 0, 32)
         SidebarPane.Size = UDim2.new(0,Width,1,0)
         HeaderSurface.Position=UDim2.fromOffset(Width,0)
         HeaderSurface.Size=UDim2.new(1,-Width,1,0)
-        Tabs.Size = UDim2.new(0, Width, 1, -78)
-        Container.Size = UDim2.new(1, -Width - 1, 1, -78)
+        Tabs.Size = UDim2.new(0, Width, 1, -102)
+        Container.Size = UDim2.new(1, -Width - 1, 1, -94)
 
         if WindowInfo.EnableCompacting then
             ApplyCompact()
@@ -19132,7 +19208,7 @@ function Library:CreateWindow(WindowInfo)
                 end
 
                 if TabboxRail.AbsoluteSize.X <= 0 then
-                    task.defer(MoveChip, Button, false)
+                    -- Wait for the existing size signal; hidden rails can stay at zero.
                     return
                 end
 
@@ -19430,7 +19506,7 @@ function Library:CreateWindow(WindowInfo)
 
                     local ContentSize = (List.AbsoluteContentSize.Y / Library.DPIScale) + 18
                     if Tabbox.PoppedOut then
-                        ContentSize = math.min(ContentSize, GetPopOutBodyMaxHeight(Tabbox, 52))
+                        ContentSize = if Tabbox.PopOutHeight then GetPopOutBodyMaxHeight(Tabbox,52) else math.min(ContentSize, GetPopOutBodyMaxHeight(Tabbox, 52))
                     end
 
                     TabboxHolder.Size = UDim2.new(1, 0, 0, ContentSize + 52)
@@ -19824,7 +19900,7 @@ function Library:CreateWindow(WindowInfo)
                 local TopSize = (GroupboxTop.AbsoluteSize.Y / Library.DPIScale)
                 local ContainerSize = (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 20
                 if Groupbox.PoppedOut then
-                    ContainerSize = math.min(ContainerSize, GetPopOutBodyMaxHeight(Groupbox, TopSize + 1))
+                    ContainerSize = if Groupbox.PopOutHeight then GetPopOutBodyMaxHeight(Groupbox,TopSize+1) else math.min(ContainerSize, GetPopOutBodyMaxHeight(Groupbox, TopSize + 1))
                 end
 
                 local TargetSize = UDim2.new(1, 0, 0, if Groupbox.Collapsed then TopSize else (TopSize + 1 + ContainerSize))
@@ -22049,7 +22125,7 @@ function Library:CreateWindow(WindowInfo)
             Dialog:Resize()
         end
 
-        function Dialog:Dismiss()
+        function Dialog:Dismiss(Immediate: boolean?)
             if Dialog.Destroyed then
                 return
             end
@@ -22068,6 +22144,11 @@ function Library:CreateWindow(WindowInfo)
             end
             table.clear(Dialog.Elements)
 
+            if Immediate then
+                DialogOverlay:Destroy()
+                Library.Dialogues[Idx]=nil
+                return
+            end
             local CloseTween = TweenService:Create(DialogScale, Library.TweenInfo, { Scale = 0.95 })
             TweenService:Create(DialogOverlay, Library.TweenInfo, { BackgroundTransparency = 1 }):Play()
             CloseTween:Play()
@@ -22080,7 +22161,7 @@ function Library:CreateWindow(WindowInfo)
 
         Library:OnActivate(DialogOverlay, function()
             if Info.OutsideClickDismiss then
-                Dialog:Dismiss()
+                Dialog:Dismiss(Info.InstantOutsideDismiss)
             end
         end)
 

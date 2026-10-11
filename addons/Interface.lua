@@ -28,7 +28,7 @@ function Interface.new(Library, Window)
         for key,v in pairs(props or {}) do b[key]=v end
         corner(b,8)
         make("UIPadding",b,{PaddingLeft=UDim.new(0,10),PaddingRight=UDim.new(0,10)})
-        Library:OnActivate(b,callback)
+        if callback then Library:OnActivate(b,callback) end
         if Library.PrimeMaterial then Library.PrimeMaterial:Apply(b) end
         return b
     end
@@ -73,6 +73,12 @@ function Interface.new(Library, Window)
                 local full=narrow or a~=b
                 side.Position=UDim2.new(index-1,0,side.Position.Y.Scale,side.Position.Y.Offset)
                 side.Size=UDim2.new(full and 1 or .5,full and 0 or -3,side.Size.Y.Scale,side.Size.Y.Offset)
+                -- An empty full-width sibling must never intercept the occupied column.
+                side.Visible=index==1 and a or (index==2 and b and not narrow)
+                side.Active=side.Visible
+                side.ScrollingEnabled=side.Visible
+                side.AutomaticCanvasSize=Enum.AutomaticSize.Y
+                side.CanvasSize=UDim2.new()
             end
             busy=false
         end
@@ -91,13 +97,13 @@ function Interface.new(Library, Window)
         page:RefreshSides()
         for _,sub in pairs(page.SubTabs or {}) do self:Adaptive(sub) end
     end
-    -- Tap selects a row for inspection. The separate selection action edits a draft;
+    -- Tap inspects; double tap or the inline check edits a draft;
     -- only Apply calls the existing option callback. Cancel never mutates the option.
     function self:Browser(info)
         if Library.ActiveDialog then return end
         local draft={};for id,on in pairs(info.Option.Value) do if on then draft[id]=true end end
-        local dialog=Window:AddDialog(info.Id,{Title=info.Title,Description=info.Description or "Tap an item to inspect it. Apply saves your selection.",
-            Width=760,OutsideClickDismiss=false,FooterButtons={{Title="Cancel",Variant="Secondary"},
+        local dialog=Window:AddDialog(info.Id,{Title=info.Title,Description=info.Description or "Tap to inspect · double tap to select · drag a check to select several. Apply saves.",
+            Width=760,OutsideClickDismiss=true,InstantOutsideDismiss=true,FooterButtons={{Title="Cancel",Variant="Secondary"},
                 {Title="Apply",Callback=function() info.Option:SetValue(draft);if info.Applied then info.Applied(draft) end end}}})
         local root=make("Frame",dialog.Container,{Name="PrimeItemBrowser",BackgroundTransparency=1,Size=UDim2.new(1,0,0,350)})
         local search=make("TextBox",root,{Name="Search",PlaceholderText="Search items…",Text="",ClearTextOnFocus=false,
@@ -123,10 +129,14 @@ function Interface.new(Library, Window)
         local current,category=nil,"All"
         local rows,categoryButtons={},{}
         local empty=text(list,"No matching items",{Size=UDim2.new(1,0,0,44),Visible=false,TextWrapped=true})
-        local selectButton,actionButton
+        local actionButton
+        local checks={}
         local function paint()
-            for id,row in pairs(rows) do row.Text=(draft[id] and "✓  " or "○  ")..(info.Names[id] or id) end
-            if current then selectButton.Text=draft[current] and "Deselect item" or "Select item" end
+            for id,check in pairs(checks) do
+                check.Text=draft[id] and "✓" or "+"
+                check.BackgroundColor3=draft[id] and Color3.fromRGB(95,78,119) or Color3.fromRGB(55,52,65)
+                check:SetAttribute("Selected",draft[id]==true)
+            end
         end
         local function focus(id)
             current=id
@@ -144,7 +154,18 @@ function Interface.new(Library, Window)
             for key,row in pairs(rows) do row.BackgroundColor3=key==id and Color3.fromRGB(77,68,91) or Color3.fromRGB(48,45,57) end
             paint()
         end
-        selectButton=button(detail,"Select item",{LayoutOrder=3},function() if current then draft[current]=not draft[current] or nil;paint() end end)
+        local function select(id,value)
+            if dialog.Destroyed or not rows[id] then return end
+            draft[id]=value and true or nil;paint()
+        end
+        local lastId,lastTap=nil,0
+        local function activate(id)
+            local now=os.clock()
+            if lastId==id and now-lastTap<=.35 then
+                select(id,not draft[id]);lastId=nil;lastTap=0
+            else lastId=id;lastTap=now end
+            focus(id)
+        end
         if info.Action then actionButton=button(detail,info.ActionText or "Use item",{LayoutOrder=4},function() if current then info.Action(current);focus(current) end end) end
         local function filter()
             local query=search.Text:lower()
@@ -162,10 +183,58 @@ function Interface.new(Library, Window)
             corner(b,999);categoryButtons[name]=b
         end
         for index,id in ipairs(info.Ids) do
-            local row=button(list,info.Names[id] or id,{Name=id,Size=UDim2.new(1,0,0,44),LayoutOrder=index,TextXAlignment=Enum.TextXAlignment.Left},function() focus(id) end)
+            local row=button(list,info.Names[id] or id,{Name=id,Size=UDim2.new(1,0,0,44),LayoutOrder=index,TextXAlignment=Enum.TextXAlignment.Left},function() activate(id) end)
+            row:FindFirstChildOfClass("UIPadding").PaddingRight=UDim.new(0,44)
             make("UIStroke",row,{Thickness=1,Color=Color3.fromRGB(170,158,185),Transparency=.72})
             rows[id]=row
+            local check=button(row,"+",{Name="SelectItem",AnchorPoint=Vector2.new(1,.5),Position=UDim2.new(1,38,.5,0),Size=UDim2.fromOffset(32,32)},nil)
+            -- UIPadding offsets the row's child coordinate space as well as its text.
+            check:FindFirstChildOfClass("UIPadding"):Destroy()
+            checks[id]=check
         end
+        -- A drag begins on the explicit check target, leaving ordinary touch swipes
+        -- available for scrolling the list. All rows traversed receive one value.
+        local inputService=game:GetService("UserInputService")
+        local drag,dragPoint,dragLast,dragValue,dragMoved,visited
+        local connections={}
+        local suppress={}
+        for id,check in pairs(checks) do
+            connections[#connections+1]=check.InputBegan:Connect(function(input)
+                if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+                    drag=input;dragPoint=Vector2.new(input.Position.X,input.Position.Y)
+                    dragLast=dragPoint
+                    dragValue=not draft[id];dragMoved=false;visited={};visited[id]=true
+                end
+            end)
+            Library:OnActivate(check,function()
+                if suppress[id] then suppress[id]=nil;return end
+                select(id,not draft[id])
+            end)
+        end
+        connections[#connections+1]=inputService.InputChanged:Connect(function(input)
+            if not drag or (input~=drag and input.UserInputType~=Enum.UserInputType.MouseMovement) then return end
+            local point=Vector2.new(input.Position.X,input.Position.Y)
+            if not dragMoved and (point-dragPoint).Magnitude<8 then return end
+            if not dragMoved then
+                dragMoved=true;list.ScrollingEnabled=false
+                for id in pairs(visited) do select(id,dragValue);suppress[id]=true end
+            end
+            local p,s=list.AbsolutePosition,list.AbsoluteSize
+            local from=dragLast;dragLast=point
+            if point.X<p.X or point.X>p.X+s.X or point.Y<p.Y or point.Y>p.Y+s.Y then return end
+            local low=math.max(p.Y,math.min(from.Y,point.Y))
+            local high=math.min(p.Y+s.Y,math.max(from.Y,point.Y))
+            for id,row in pairs(rows) do
+                if row.Visible and not visited[id] and row.AbsolutePosition.Y<=high and row.AbsolutePosition.Y+row.AbsoluteSize.Y>=low then
+                    visited[id]=true;select(id,dragValue)
+                end
+            end
+        end)
+        connections[#connections+1]=inputService.InputEnded:Connect(function(input)
+            if input~=drag then return end
+            drag=nil;list.ScrollingEnabled=true
+            task.delay(.2,function() table.clear(suppress) end)
+        end)
         local actions=make("Frame",root,{BackgroundTransparency=1,Position=UDim2.new(0,0,1,-36),Size=UDim2.new(.48,-6,0,36)})
         local selectAll=button(actions,"Select shown",{Size=UDim2.new(.5,-3,1,0)},function() for id,row in pairs(rows) do if row.Visible then draft[id]=true end end;paint() end)
         local clearAll=button(actions,"Clear shown",{Position=UDim2.new(.5,3,0,0),Size=UDim2.new(.5,-3,1,0)},function() for id,row in pairs(rows) do if row.Visible then draft[id]=nil end end;paint() end)
@@ -187,12 +256,13 @@ function Interface.new(Library, Window)
         local resizeConnection=Window.MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
         local changeConnection=info.Changed and info.Changed:Connect(function() if current and not dialog.Destroyed then focus(current) end end)
         root.Destroying:Once(function()
+            for _,connection in ipairs(connections) do connection:Disconnect() end
             resizeConnection:Disconnect()
             if changeConnection then changeConnection:Disconnect() end
             if self.ActiveBrowser and self.ActiveBrowser.Dialog==dialog then self.ActiveBrowser=nil end
         end)
         resize()
-        self.ActiveBrowser={Dialog=dialog,Rows=rows,Search=search,Focus=focus,Select=selectButton,Action=actionButton,Draft=draft,Root=root}
+        self.ActiveBrowser={Dialog=dialog,Rows=rows,Checks=checks,Categories=categoryButtons,Search=search,Focus=focus,Activate=activate,SetSelected=select,Action=actionButton,Draft=draft,Root=root}
         return dialog
     end
     return self

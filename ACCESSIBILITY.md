@@ -68,3 +68,17 @@ The shared Materials layer also covers lazy history, context menus, pop-outs and
 ## 0.10 application composition
 
 Item details open on activation rather than hover; 44px list rows retain selection markers as well as color. Search reports no matches, and bulk actions apply only to visible rows. Dialogs keep a solid Cosmic backplate independent of the shell opacity. Narrow application columns stack at 580 logical content pixels; wider layouts restore their original sides. These checks cover executor rendering and callbacks, not physical touch, screen-reader announcements, every theme, or 200% scaling.
+
+## 0.11 responsive composition
+
+Live callback/geometry checks on PID 26184 cover double activation, draft cancellation
+on outside dismissal, every fisherman rarity, narrow canvas scrolling, restored wide
+columns, centered responsive logo, floating glass and two-axis resize/redock cleanup.
+Inline check targets are 32px and item rows 44px. Drag selection begins on a check;
+ordinary swipes over rows remain scrolling. The same action is available without a
+gesture through the inline check and bulk controls. Pop-out resizing has a numeric API
+and arrow-key increments on a selected grip. Physical touch, full keyboard focus flow,
+gamepad, all themes and assistive technology still require device testing.
+
+Mouse input also verified corner resize and contiguous drag deselection across five
+item rows, preserving the sixth. Physical touch remains unverified.

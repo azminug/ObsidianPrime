@@ -1,4 +1,4 @@
--- Imperium Frosted 0.10. Local preview; no gameplay remotes or automation.
+-- Imperium Frosted 0.11. Local preview; no gameplay remotes or automation.
 local env = (getgenv and getgenv()) or _G
 local OWNER = "ObsidianPrimeDemo"
 local function fetch(path)
@@ -139,6 +139,6 @@ local ok, err = xpcall(function()
     end)
     record("Preview loaded; telemetry connected")
     Library.PrimePreview={Appearance=Appearance,Materials=Materials,Showcase=Showcase,Tabs={Home=Home,Fishing=Fishing,Settings=Settings}}
-    print("[Imperium Frosted 0.10] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
+    print("[Imperium Frosted 0.11] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
 end,function(message) return debug.traceback(tostring(message),2) end)
 if not ok then pcall(function() Library:Unload() end);error("[Imperium Frosted] "..tostring(err),0) end

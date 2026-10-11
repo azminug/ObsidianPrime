@@ -167,7 +167,7 @@ function Materials.new(Library)
         local role=self.Surfaces[object]
         if not role then
             if object.Name=="Main" and object.Parent and object.Parent:IsA("ScreenGui") then role="Window"
-            elseif object.Name=="PrimeGroupedSurface" then role="Group"
+            elseif object.Name=="PrimeGroupedSurface" or object.Name=="PrimeFloatingSurface" then role="Group"
             elseif object.Name=="PrimeTabboxSurface" and object.BackgroundTransparency<.95 then role="Group"
             elseif object.Name=="PrimeSidebarPane" then role="Sidebar"
             elseif object.Name=="PrimeHeaderSurface" then role="Header"

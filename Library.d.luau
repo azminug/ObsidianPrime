@@ -1050,6 +1050,7 @@ export type Groupbox = BaseGroupbox & {
     RefreshPopOutPlaceholder: (self: Groupbox) -> (),
     SetMaxPopOutHeight: (self: Groupbox, Height: number?) -> (),
     SetPopOutWidth: (self: Groupbox, Width: number?) -> (),
+    SetPopOutSize: (self: Groupbox, Width: number, Height: number) -> (),
 }
 
 export type SubTab = BaseGroupbox & {
@@ -1090,6 +1091,7 @@ export type Tabbox = {
     RefreshPopOutPlaceholder: (self: Tabbox) -> (),
     SetMaxPopOutHeight: (self: Tabbox, Height: number?) -> (),
     SetPopOutWidth: (self: Tabbox, Width: number?) -> (),
+    SetPopOutSize: (self: Tabbox, Width: number, Height: number) -> (),
 }
 
 --// A tab nested inside a Tab, shown as a row of buttons above the content
@@ -1307,7 +1309,7 @@ export type Dialog = {
     RemoveFooterButton: (self: Dialog, ButtonIdx: string) -> (),
     SetButtonDisabled: (self: Dialog, ButtonIdx: string, Disabled: boolean) -> (),
     SetButtonOrder: (self: Dialog, ButtonIdx: string, Order: number) -> (),
-    Dismiss: (self: Dialog) -> (),
+    Dismiss: (self: Dialog, Immediate: boolean?) -> (),
 }
 
 
@@ -1347,6 +1349,7 @@ export type Window = {
             DescriptionColor: Color3?,
             AutoDismiss: boolean?,
             OutsideClickDismiss: boolean?,
+            InstantOutsideDismiss: boolean?,
             FooterButtons: { [string]: DialogButtonInfo }?,
             Width: number?, -- Preferred logical width, clamped to the window
         }
@@ -1643,6 +1646,7 @@ export type Library = {
             Title: string?,
             Footer: (string | { string | FooterSegment })?,
             CopyableFooter: boolean?,
+            LogoOnly: boolean?,
             Position: UDim2?,
             Size: UDim2?,
             Icon: string?,

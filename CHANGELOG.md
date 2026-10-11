@@ -1,3 +1,13 @@
+## Imperium 0.11 · 2026-10-11
+
+- Responsive logo-only sidebar header, safe clipped navigation bounds, centered footer with separate static and copyable segments.
+- Floating groupboxes/tabboxes retain glass and support corner resize, keyboard increments and `SetPopOutSize`; redocking cleans up resize input.
+- Item browsers support inline checks, double activation, drag selection, rarity categories and instant outside dismissal without saving drafts.
+- Empty adaptive columns no longer intercept scrolling. Stacked content retains native automatic canvas sizing.
+- Hidden tabbox rails wait for layout signals instead of recursively deferring chip placement.
+- Imperium application uses two Economy flows, fisherman rarity filters and restores UI identity on repeated rod inspection.
+- Pin integrations to `imperium-v0.11.0`. Physical touch and full accessibility conformance remain unverified.
+
 ## Imperium 0.10 · 2026-10-11
 
 - Add reusable Interface composition: adaptive native columns, horizontal banners,

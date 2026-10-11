@@ -1,4 +1,4 @@
-# Application composition (0.10)
+# Application composition (0.11)
 
 Load `addons/Interface.lua` from the same pinned revision as `Library.lua`.
 This addon composes native controls; it does not install gameplay workers or
@@ -35,8 +35,11 @@ Composition:Browser({
 ```
 
 Rows inspect on activation, including touch. Search and horizontally scrollable
-category capsules filter the list. Select/deselect and select/clear shown modify
-a draft; Apply calls `Option:SetValue(draft)` once. Cancel discards the draft.
+category capsules filter the list. Double activation within 350ms or the inline
+32px check toggles a draft selection. Drag from a check to paint the same selection
+state across rows; swiping elsewhere retains normal scrolling. Select/clear shown
+acts only on visible results. Apply calls `Option:SetValue(draft)` once. Cancel or
+an outside tap discards the draft; outside dismissal is immediate.
 Optional `Applied(draft)` runs after that existing native callback.
 
 Optional `Action(id)` / `ActionText` can call an existing equipment action.
@@ -48,9 +51,18 @@ Application readers that change executor thread identity must restore it before
 returning to the UI. Keep inspection read-only; perform actions only in `Action`.
 
 Dialogs accept `Width` as a preferred logical width, clamped to 75% of the main
-window. Menus, notification history, dialogs and popped-out containers use solid
-Cosmic material. Main window and cards retain the selected glass/opaque setting.
-The footer is centered with equal safe insets; the application logo is rounded.
+window. Menus, notification history and dialogs use solid Cosmic material.
+Popped-out modules retain glass and respect opaque mode. Each has a 32px corner
+resize target with mouse/touch drag and arrow-key increments when selected.
+`box:SetPopOutSize(width, height)` is the non-drag API; sizes are logical pixels
+and clamped to the viewport. Existing width/max-body-height APIs remain intact.
+
+Window `LogoOnly=true` is the default; the logo scales from 24 to 44px with sidebar
+width. Set `LogoOnly=false` to retain the legacy title presentation. The footer
+has a centered 32px strip with 40px side reserves. Pass static and copyable segments
+separately: `Footer={{Text="Script v1"},{Text="Discord",Copyable=true,CopyText=url}}`.
+Only opt-in segments copy. Empty adaptive columns are hidden so they cannot absorb
+scroll input; native automatic canvas sizing tracks stacked content.
 
 Runtime validation covers draft/apply/cancel, searches, recipe and equipment
 inspection, narrow/wide reflow and unchanged native config roundtrips. Physical
