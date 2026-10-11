@@ -1,3 +1,11 @@
+## Imperium 0.12 · 2026-10-11
+
+- Subcategory capsules use tabbox rail/chip dimensions and material tokens, with 16px clearance before cards.
+- Responsive sidebar follows window width with a safe expanded minimum; manual proportions and explicit compact mode remain available.
+- Logo scales with the sidebar while staying centered. Footer is centered over the content span, with clipped/ellipsized text and resize reserves.
+- Runtime geometry checks cover 480/680/892px windows, minimum clamping, compact/manual modes, rapid category switching and 125% DPI.
+- Pin application integrations to `imperium-v0.12.0`.
+
 ## Imperium 0.11 · 2026-10-11
 
 - Responsive logo-only sidebar header, safe clipped navigation bounds, centered footer with separate static and copyable segments.

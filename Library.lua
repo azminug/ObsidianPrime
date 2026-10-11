@@ -498,6 +498,7 @@ local Templates = {
         UnlockMouseWhileOpen = true,
 
         EnableSidebarResize = true,
+        ResponsiveSidebar = true,
         EnableCompacting = true,
         DisableCompactingSnap = false,
         SidebarCompacted = false,
@@ -3225,7 +3226,8 @@ end
 --// Animations \\--
 local TransparencyCache = {}
 local ActiveTabTweens = setmetatable({}, { __mode = "k" })
-local SUBTAB_BAR_HEIGHT = 36
+local SUBTAB_BAR_HEIGHT = 32
+local SUBTAB_CONTENT_GAP = 16
 local SUBTAB_IDLE_TRANSPARENCY = 0.10
 local SUBTAB_ICON_SIZE = 16
 local SUBTAB_SLIDE_TWEEN = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -16618,7 +16620,7 @@ function Library:CreateWindow(WindowInfo)
 
     Library.OriginalMinSize =
         Vector2.new(math.min(Library.OriginalMinSize.X, MaxX), math.min(Library.OriginalMinSize.Y, MaxY))
-    Library.MinSize = Vector2.new(math.min(WindowInfo.MinContainerWidth, MaxX), Library.OriginalMinSize.Y)
+    Library.MinSize = Vector2.new(math.min(math.max(Library.OriginalMinSize.X, WindowInfo.MinContainerWidth + WindowInfo.MinSidebarWidth + 1), MaxX), Library.OriginalMinSize.Y)
 
     WindowInfo.Size = UDim2.fromOffset(
         math.clamp(WindowInfo.Size.X.Offset, Library.MinSize.X, MaxX),
@@ -16696,6 +16698,8 @@ function Library:CreateWindow(WindowInfo)
     local HasBackgroundImage = false
     local BottomBackground
     local FooterSegments = {}
+    local FooterHolder
+    local FitFooter
     local BuildFooter
     local BuildMiniFooter
     local TopBar
@@ -16706,7 +16710,14 @@ function Library:CreateWindow(WindowInfo)
         AvoidCoreGui = WindowInfo.SnapAvoidCoreGui,
     }
 
-    local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
+    local InitialLeftWidth = math.clamp(math.ceil(WindowInfo.Size.X.Offset * 0.3),
+        math.min(WindowInfo.MinSidebarWidth,WindowInfo.Size.X.Offset-WindowInfo.MinContainerWidth-1),
+        math.max(48,WindowInfo.Size.X.Offset-WindowInfo.MinContainerWidth-1))
+    local SidebarRatio=InitialLeftWidth/WindowInfo.Size.X.Offset
+    local CompactRequested=WindowInfo.SidebarCompacted
+    local function LogoSize(width)
+        return math.clamp(width*.16,24,44)
+    end
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
     local Minimized = false
@@ -16933,7 +16944,7 @@ function Library:CreateWindow(WindowInfo)
         if WindowInfo.LogoOnly then
             WindowTitle.Visible=false
             WindowIcon.Visible=true
-            local size=math.clamp(InitialLeftWidth*.2,24,44)
+            local size=LogoSize(InitialLeftWidth)
             WindowIcon.Size=UDim2.fromOffset(size,size)
         end
 
@@ -17619,11 +17630,12 @@ function Library:CreateWindow(WindowInfo)
 
         --// Footer \\-
         --// The footer is a row of segments; each one is plain or copyable
-        local FooterHolder = New("Frame", {
+        FooterHolder = New("Frame", {
             Name = "PrimeFooter",
             ClipsDescendants = true,
             BackgroundTransparency = 1,
-            Size = UDim2.fromScale(1, 1),
+            Position=UDim2.fromOffset(InitialLeftWidth+1,0),
+            Size = UDim2.new(1,-InitialLeftWidth-1,1,0),
             Parent = BottomBar,
         })
         New("UIListLayout", {
@@ -17635,6 +17647,25 @@ function Library:CreateWindow(WindowInfo)
         })
         New("UIPadding", {PaddingLeft=UDim.new(0,40),
             PaddingRight=UDim.new(0,40),Parent=FooterHolder})
+
+        FitFooter=function()
+            if not FooterHolder or not FooterHolder.Parent then return end
+            local available=math.max(0,FooterHolder.AbsoluteSize.X/Library.DPIScale-80-math.max(0,#FooterSegments-1)*6)
+            local natural,total={},0
+            for _,object in FooterSegments do
+                if object:IsA("TextLabel") then
+                    local width=math.ceil(Library:GetTextBounds(object.Text,Library.Scheme.Font,13))+2
+                    natural[object]=width;total+=width
+                else available-=object.Size.X.Offset end
+            end
+            local ratio=total>0 and math.min(1,math.max(0,available)/total) or 1
+            for object,width in natural do
+                object.AutomaticSize=Enum.AutomaticSize.None
+                object.TextTruncate=Enum.TextTruncate.AtEnd
+                object.Size=UDim2.new(0,math.floor(width*ratio),1,0)
+            end
+        end
+        Library:GiveSignal(FooterHolder:GetPropertyChangedSignal("AbsoluteSize"):Connect(FitFooter))
 
         local function AddFooterSegment(Info)
             local Text = tostring(Info.Text or "")
@@ -17778,6 +17809,7 @@ function Library:CreateWindow(WindowInfo)
                     Copyable = WindowInfo.CopyableFooter ~= false,
                 })
 
+                FitFooter()
                 return
             end
 
@@ -17789,6 +17821,7 @@ function Library:CreateWindow(WindowInfo)
 
                 AddFooterSegment(Segment)
             end
+            FitFooter()
         end
 
         --// The minimized card shows the same footer, flattened to plain text since it
@@ -18480,15 +18513,19 @@ function Library:CreateWindow(WindowInfo)
         return Tabs.Size.X.Offset
     end
 
-    function Window:SetSidebarWidth(Width)
+    function Window:SetSidebarWidth(Width, FromResize: boolean?)
         local maxWidth = math.max(48, MainFrame.Size.X.Offset - WindowInfo.MinContainerWidth - 1)
+        if not FromResize then
+            CompactRequested=WindowInfo.EnableCompacting and Width<=WindowInfo.SidebarCompactWidth
+            if not CompactRequested then SidebarRatio=Width/math.max(1,MainFrame.Size.X.Offset) end
+        end
         Width = math.clamp(Width, 48, maxWidth)
 
         DividerLine.Position = UDim2.fromOffset(Width, 0)
 
         TitleHolder.Size = UDim2.new(0, Width, 0, WindowInfo.LogoOnly and 48 or 32)
         if WindowInfo.LogoOnly then
-            local size=math.clamp(Width*.2,24,44)
+            local size=LogoSize(Width)
             WindowIcon.Size=UDim2.fromOffset(size,size)
         end
         RightWrapper.Size = UDim2.new(1, -Width - 17 - RightBarInset - 1, 0, 32)
@@ -18497,6 +18534,9 @@ function Library:CreateWindow(WindowInfo)
         HeaderSurface.Size=UDim2.new(1,-Width,1,0)
         Tabs.Size = UDim2.new(0, Width, 1, -102)
         Container.Size = UDim2.new(1, -Width - 1, 1, -94)
+        FooterHolder.Position=UDim2.fromOffset(Width+1,0)
+        FooterHolder.Size=UDim2.new(1,-Width-1,1,0)
+        FitFooter()
 
         if WindowInfo.EnableCompacting then
             ApplyCompact()
@@ -18505,6 +18545,18 @@ function Library:CreateWindow(WindowInfo)
             LastExpandedWidth = Width
         end
     end
+
+    local function ReflowSidebar()
+        if Library.Unloaded or not MainFrame.Parent then return end
+        local width=MainFrame.Size.X.Offset
+        local maximum=math.max(48,width-WindowInfo.MinContainerWidth-1)
+        local minimum=math.min(WindowInfo.MinSidebarWidth,maximum)
+        local desired=CompactRequested and WindowInfo.SidebarCompactWidth
+            or math.clamp(width*SidebarRatio,minimum,maximum)
+        Window:SetSidebarWidth(WindowInfo.ResponsiveSidebar and desired or math.min(Window:GetSidebarWidth(),maximum),true)
+    end
+    Library:GiveSignal(MainFrame:GetPropertyChangedSignal("Size"):Connect(ReflowSidebar))
+    ReflowSidebar()
 
     function Window:ShowTabInfo(Name, Description)
         --// RichText is on by default, so the name can carry its own weight
@@ -20522,7 +20574,7 @@ function Library:CreateWindow(WindowInfo)
                 Size=UDim2.fromOffset(0,SUBTAB_BAR_HEIGHT), ZIndex=1, Parent=SubTabBar,
             })
             New("UICorner",{CornerRadius=UDim.new(0,999),Parent=Recess})
-            New("UIStroke",{Color="FontColor",Transparency=.92,Thickness=1,Parent=Recess})
+            New("UIStroke",{Color="FontColor",Transparency=1,Thickness=1,Parent=Recess})
             --// The buttons get their own frame: a UIListLayout lays out every child,
             --// so the underline cannot live alongside them without being laid out too
             SubTabButtons = New("ScrollingFrame", {
@@ -20542,7 +20594,7 @@ function Library:CreateWindow(WindowInfo)
                 FillDirection = Enum.FillDirection.Horizontal,
                 HorizontalAlignment = Enum.HorizontalAlignment.Left,
                 VerticalAlignment = Enum.VerticalAlignment.Center,
-                Padding = UDim.new(0, 6),
+                Padding = UDim.new(0, 0),
                 Parent = SubTabButtons,
             })
             local function ResizeRecess()
@@ -20552,15 +20604,14 @@ function Library:CreateWindow(WindowInfo)
                 for _,item in ipairs(SubTabButtons:GetChildren()) do
                     if item:IsA("GuiButton") and item.Visible then table.insert(items,item) end
                 end
-                local cap=math.max(64,math.floor((available-math.max(0,#items-1)*6)/math.max(1,#items)))
+                local cap=math.max(64,math.floor(available/math.max(1,#items)))
                 local width=0
                 for _,item in ipairs(items) do
                     local natural=item:GetAttribute("PrimeNaturalWidth") or item.Size.X.Offset
                     local size=math.min(natural,cap)
-                    item.Size=UDim2.fromOffset(size,SUBTAB_BAR_HEIGHT-8)
+                    item.Size=UDim2.fromOffset(size,SUBTAB_BAR_HEIGHT-TABBOX_CHIP_INSET*2)
                     width+=size
                 end
-                width+=math.max(0,#items-1)*6
                 local x=SubTabAlignment=="Left" and 0 or SubTabAlignment=="Right" and 1 or .5
                 Recess.AnchorPoint=Vector2.new(x,.5)
                 Recess.Position=UDim2.fromScale(x,.5)
@@ -20742,8 +20793,8 @@ function Library:CreateWindow(WindowInfo)
             Offset = ApplyPlayerBannerOffset(Offset)
 
             if SubTabBar and SubTabBar.Visible then
-                SubTabBar.Position = UDim2.new(0, 2, 0, Offset)
-                Offset += SUBTAB_BAR_HEIGHT + 10
+                SubTabBar.Position = UDim2.new(0, 2, 0, Offset+4)
+                Offset += 4 + SUBTAB_BAR_HEIGHT + SUBTAB_CONTENT_GAP
             end
 
             return Offset
@@ -20823,7 +20874,7 @@ function Library:CreateWindow(WindowInfo)
             local Button = New("TextButton", {
                 BackgroundTransparency = 1,
                 Name = "PrimeSubcategoryButton",
-                Size = UDim2.fromOffset(TextWidth + IconWidth + 24, SUBTAB_BAR_HEIGHT - 8),
+                Size = UDim2.fromOffset(TextWidth + IconWidth + 24, SUBTAB_BAR_HEIGHT - TABBOX_CHIP_INSET * 2),
                 Text = "",
                 Parent = SubTabButtons,
             })
@@ -20870,10 +20921,8 @@ function Library:CreateWindow(WindowInfo)
 
             local Chip = New("Frame", {
                 Name = "PrimeSegment",
-                --// Lighter than MainColor so the active chip separates from the tab
-                BackgroundColor3 = function()
-                    return Library:GetBetterColor(Library.Scheme.MainColor, 10)
-                end,
+                --// Same material token as the native tabbox selection chip
+                BackgroundColor3 = "MainColor",
                 BackgroundTransparency = 1,
                 Size = UDim2.fromScale(1, 1),
                 ZIndex = 2,
@@ -21071,14 +21120,14 @@ function Library:CreateWindow(WindowInfo)
                     Tab.ActiveSubTab:Hide()
                 end
 
-                Library:AddToRegistry(ButtonLabel, { TextColor3 = "AccentColor" })
-                ButtonLabel.TextColor3 = Library.Scheme.AccentColor
+                Library:AddToRegistry(ButtonLabel, { TextColor3 = "FontColor" })
+                ButtonLabel.TextColor3 = Library.Scheme.FontColor
 
                 TweenService:Create(Chip, Library.TweenInfo, {
                     BackgroundTransparency = 0,
                 }):Play()
                 TweenService:Create(ButtonStroke, Library.TweenInfo, {
-                    Transparency = 0.25,
+                    Transparency = 0,
                 }):Play()
                 for Index, Shadow in ButtonShadows do
                     TweenService:Create(Shadow, Library.TweenInfo, {

@@ -12,3 +12,5 @@ tests/*
 ImperiumPreview.bundle.lua
 .claude/worktrees/*
 roblox.yml
+
+!tests/responsive-shell-smoke.lua

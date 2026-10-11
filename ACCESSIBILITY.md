@@ -82,3 +82,10 @@ gamepad, all themes and assistive technology still require device testing.
 
 Mouse input also verified corner resize and contiguous drag deselection across five
 item rows, preserving the sixth. Physical touch remains unverified.
+
+## 0.12 responsive shell
+
+Executor geometry checks cover 480/680/892px widths, expanded sidebar minimum,
+manual proportions, compact mode, centered/scaled logo, content-centered footer,
+footer resize reserves and ellipsis, 16px module clearance, rapid tab reversal and
+125% DPI. Full physical touch, keyboard/gamepad and 200% text reflow remain unverified.

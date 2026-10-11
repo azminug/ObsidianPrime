@@ -1,4 +1,4 @@
-# Application composition (0.11)
+# Application composition (0.12)
 
 Load `addons/Interface.lua` from the same pinned revision as `Library.lua`.
 This addon composes native controls; it does not install gameplay workers or
@@ -58,8 +58,9 @@ resize target with mouse/touch drag and arrow-key increments when selected.
 and clamped to the viewport. Existing width/max-body-height APIs remain intact.
 
 Window `LogoOnly=true` is the default; the logo scales from 24 to 44px with sidebar
-width. Set `LogoOnly=false` to retain the legacy title presentation. The footer
-has a centered 32px strip with 40px side reserves. Pass static and copyable segments
+width (16%, clamped to 24–44px). Set `LogoOnly=false` to retain the legacy title presentation. The footer
+has a 32px strip centered over the content area, excluding the sidebar, with 40px
+side reserves. Text segments ellipsize proportionally when space is limited. Pass static and copyable segments
 separately: `Footer={{Text="Script v1"},{Text="Discord",Copyable=true,CopyText=url}}`.
 Only opt-in segments copy. Empty adaptive columns are hidden so they cannot absorb
 scroll input; native automatic canvas sizing tracks stacked content.
@@ -68,3 +69,11 @@ Runtime validation covers draft/apply/cancel, searches, recipe and equipment
 inspection, narrow/wide reflow and unchanged native config roundtrips. Physical
 touch devices, gamepad/screen readers, all themes and 200% text scaling still
 need device testing. This is not a WCAG conformance certification.
+
+`ResponsiveSidebar=true` is the default. Window resize preserves the sidebar's
+chosen width ratio, clamps expanded width to `MinSidebarWidth` and the available
+content width, and keeps explicit compact mode compact. `SetSidebarWidth` establishes
+a new preferred ratio. Set `ResponsiveSidebar=false` for a fixed sidebar width.
+The minimum resizable window reserves space for both sidebar and content.
+Subcategory rails share the tabbox 32px/26px rail/chip geometry and material tokens,
+with a 16px gap before modules. Horizontal overflow remains scrollable.

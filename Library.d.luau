@@ -1683,6 +1683,7 @@ export type Library = {
             MobileButtonsSide: "Left" | "Right"?,
             UnlockMouseWhileOpen: boolean?,
             EnableSidebarResize: boolean?,
+            ResponsiveSidebar: boolean?,
             EnableCompacting: boolean?,
             DisableCompactingSnap: boolean?,
             SidebarCompacted: boolean?,
