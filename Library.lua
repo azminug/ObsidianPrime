@@ -3227,7 +3227,7 @@ end
 local TransparencyCache = {}
 local ActiveTabTweens = setmetatable({}, { __mode = "k" })
 local SUBTAB_BAR_HEIGHT = 32
-local SUBTAB_CONTENT_GAP = 16
+local SUBTAB_CONTENT_GAP = 8
 local SUBTAB_IDLE_TRANSPARENCY = 0.10
 local SUBTAB_ICON_SIZE = 16
 local SUBTAB_SLIDE_TWEEN = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -16716,7 +16716,7 @@ function Library:CreateWindow(WindowInfo)
     local SidebarRatio=InitialLeftWidth/WindowInfo.Size.X.Offset
     local CompactRequested=WindowInfo.SidebarCompacted
     local function LogoSize(width)
-        return math.clamp(width*.16,24,44)
+        return math.clamp(width*.14,22,32)
     end
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
@@ -16881,7 +16881,7 @@ function Library:CreateWindow(WindowInfo)
             Name = "PrimeHeaderTitle",
             AnchorPoint=Vector2.new(0,.5),Position=UDim2.fromOffset(0,24),
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, InitialLeftWidth, 0, WindowInfo.LogoOnly and 48 or 32),
+            Size = UDim2.new(0, InitialLeftWidth, 0, WindowInfo.LogoOnly and 40 or 32),
             Parent = TopBar,
         })
         New("UIListLayout", {
@@ -16896,6 +16896,17 @@ function Library:CreateWindow(WindowInfo)
             PaddingRight=UDim.new(0,TabButtonsStyle.Padding+12),Parent=TitleHolder})
         TitleHolder.ClipsDescendants = true
         if WindowInfo.LogoOnly then
+            -- One inset header module shares the navigation's leading/trailing edges.
+            TitleHolder:SetAttribute("ImperiumSidebarHead",true)
+            TitleHolder:SetAttribute("ImperiumRadius",12)
+            TitleHolder.Position=UDim2.fromOffset(TabButtonsStyle.Padding,24)
+            TitleHolder.Size=UDim2.fromOffset(InitialLeftWidth-TabButtonsStyle.Padding*2,40)
+            TitleHolder.BackgroundTransparency=.55
+            Library:AddToRegistry(TitleHolder,{BackgroundColor3="MainColor"})
+            TitleHolder.BackgroundColor3=Library.Scheme.MainColor
+            New("UICorner",{CornerRadius=UDim.new(0,12),Parent=TitleHolder})
+            New("UIStroke",{Color="FontColor",Transparency=.86,Thickness=1,Parent=TitleHolder})
+            if Library.PrimeMaterial then Library.PrimeMaterial:Apply(TitleHolder) end
             TitleHolder:FindFirstChildOfClass("UIListLayout").HorizontalAlignment=Enum.HorizontalAlignment.Center
             local padding=TitleHolder:FindFirstChildOfClass("UIPadding")
             padding.PaddingLeft=UDim.new(0,4);padding.PaddingRight=UDim.new(0,4)
@@ -17893,9 +17904,9 @@ function Library:CreateWindow(WindowInfo)
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = "BackgroundColor",
             CanvasSize = UDim2.fromScale(0, 0),
-            Position = UDim2.fromOffset(0, 57),
+            Position = UDim2.fromOffset(0, WindowInfo.LogoOnly and (52-TabButtonsStyle.Padding) or 57),
             ScrollBarThickness = 0,
-            Size = UDim2.new(0, InitialLeftWidth, 1, -102),
+            Size = UDim2.new(0, InitialLeftWidth, 1, WindowInfo.LogoOnly and (-97+TabButtonsStyle.Padding) or -102),
             ClipsDescendants = true,
             Parent = MainFrame,
         })
@@ -18523,7 +18534,7 @@ function Library:CreateWindow(WindowInfo)
 
         DividerLine.Position = UDim2.fromOffset(Width, 0)
 
-        TitleHolder.Size = UDim2.new(0, Width, 0, WindowInfo.LogoOnly and 48 or 32)
+        TitleHolder.Size = UDim2.new(0, Width-(WindowInfo.LogoOnly and TabButtonsStyle.Padding*2 or 0), 0, WindowInfo.LogoOnly and 40 or 32)
         if WindowInfo.LogoOnly then
             local size=LogoSize(Width)
             WindowIcon.Size=UDim2.fromOffset(size,size)
@@ -18532,7 +18543,7 @@ function Library:CreateWindow(WindowInfo)
         SidebarPane.Size = UDim2.new(0,Width,1,0)
         HeaderSurface.Position=UDim2.fromOffset(Width,0)
         HeaderSurface.Size=UDim2.new(1,-Width,1,0)
-        Tabs.Size = UDim2.new(0, Width, 1, -102)
+        Tabs.Size = UDim2.new(0, Width, 1, WindowInfo.LogoOnly and (-97+TabButtonsStyle.Padding) or -102)
         Container.Size = UDim2.new(1, -Width - 1, 1, -94)
         FooterHolder.Position=UDim2.fromOffset(Width+1,0)
         FooterHolder.Size=UDim2.new(1,-Width-1,1,0)

@@ -89,3 +89,11 @@ Executor geometry checks cover 480/680/892px widths, expanded sidebar minimum,
 manual proportions, compact mode, centered/scaled logo, content-centered footer,
 footer resize reserves and ellipsis, 16px module clearance, rapid tab reversal and
 125% DPI. Full physical touch, keyboard/gamepad and 200% text reflow remain unverified.
+
+## 0.13 sidebar header and content rhythm
+
+Geometry checks cover the themed logo holder, shared side inset, vertical logo
+padding and 8px first-menu clearance at 480/680/892px. Subcategory clearance is
+now 8px, retaining 32px rail targets. Compact mode, footer alignment, rapid
+switching and 125% DPI remain covered. Physical touch, full keyboard/gamepad and
+200% text reflow remain unverified; these checks do not certify WCAG conformance.

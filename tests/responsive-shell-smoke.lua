@@ -22,6 +22,13 @@ local ok,err=xpcall(function()
         check(near(logo.AbsolutePosition.X+logo.AbsoluteSize.X/2,title.AbsolutePosition.X+title.AbsoluteSize.X/2),"logo remains centered")
         check(logo.AbsoluteSize.X>previousLogo,"logo grows with sidebar")
         previousLogo=logo.AbsoluteSize.X
+        check(title:GetAttribute("ImperiumSidebarHead") and title.BackgroundTransparency<1,"logo has a themed header module")
+        check(near(title.AbsolutePosition.X-main.AbsolutePosition.X,6),"header module shares sidebar inset")
+        check(logo.AbsolutePosition.Y-title.AbsolutePosition.Y>=4-1 and title.AbsolutePosition.Y+title.AbsoluteSize.Y-logo.AbsolutePosition.Y-logo.AbsoluteSize.Y>=4-1,"logo has vertical inset")
+        local sidebar=find(main,"PrimeSidebar")
+        sidebar.CanvasPosition=Vector2.zero
+        local contentTop=sidebar.AbsolutePosition.Y+sidebar:FindFirstChildOfClass("UIPadding").PaddingTop.Offset
+        check(near(contentTop-title.AbsolutePosition.Y-title.AbsoluteSize.Y,8),"header-to-navigation gap remains 8px")
         local footer=find(main,"PrimeFooter")
         local content=find(main,"Container")
         check(near(footer.AbsolutePosition.X+footer.AbsoluteSize.X/2,content.AbsolutePosition.X+content.AbsoluteSize.X/2),"footer centered in content span")
@@ -49,7 +56,7 @@ local ok,err=xpcall(function()
     local rail=find(temp.Container,"PrimeSubcategoryBar")
     check(near(rail.AbsoluteSize.Y/L.DPIScale,32),"subcategory uses tabbox rail height")
     local gap=(group.BoxHolder.AbsolutePosition.Y-rail.AbsolutePosition.Y-rail.AbsoluteSize.Y)/L.DPIScale
-    check(gap>=16,"at least 16px below capsule before first module")
+    check(gap>=8 and gap<=12,"compact 8–12px capsule-to-module gap")
     for _=1,8 do b:Show();a:Show() end
     task.wait(.3)
     check(temp.ActiveSubTab==a,"rapid subcategory reversal retains latest selection")

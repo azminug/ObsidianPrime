@@ -6,7 +6,7 @@ function Materials.new(Library)
     local connections, timers = {}, {}
     self.Tokens={WindowRadius=16,CardRadius=12,ControlRadius=8,CapsuleRadius=999,RimTopOpacity=.28,RimBottomOpacity=.09,HoverOpacity=.07,ScrollbarWidth=3}
     self.LockRadius=true
-    local alphas = {Window=.48, Group=.36, Sidebar=.65, Header=.35, Panel=.20, Popup=0, Control=.35, Recess=.20}
+    local alphas = {Window=.48, Group=.36, Sidebar=.65, SidebarHead=.55, Header=.35, Panel=.20, Popup=0, Control=.35, Recess=.20}
     local function animate(object,goals)
         if Library.PrimeMotion then Library.PrimeMotion:To(object,goals,30,1)
         else for key,value in pairs(goals) do object[key]=value end end
@@ -169,6 +169,7 @@ function Materials.new(Library)
             if object.Name=="Main" and object.Parent and object.Parent:IsA("ScreenGui") then role="Window"
             elseif object.Name=="PrimeGroupedSurface" or object.Name=="PrimeFloatingSurface" then role="Group"
             elseif object.Name=="PrimeTabboxSurface" and object.BackgroundTransparency<.95 then role="Group"
+            elseif object:GetAttribute("ImperiumSidebarHead") then role="SidebarHead"
             elseif object.Name=="PrimeSidebarPane" then role="Sidebar"
             elseif object.Name=="PrimeHeaderSurface" then role="Header"
             elseif object.Name=="PrimeRecess" then role="Recess"
@@ -196,7 +197,7 @@ function Materials.new(Library)
             falloff.Enabled=not self.Opaque;falloff.Parent=object
         end
         -- One subtle rim; native outlines still supply geometry and hit targets.
-        if (role=="Panel" or role=="Group" or role=="Popup") and not object:FindFirstChild("ImperiumMaterialRim") then
+        if (role=="Panel" or role=="Group" or role=="Popup" or role=="SidebarHead") and not object:FindFirstChild("ImperiumMaterialRim") then
             object:SetAttribute("ImperiumRimOwner",true)
             for _,child in ipairs(object:GetChildren()) do
                 if child:IsA("UIStroke") and Library.Registry[child] then child.Enabled=false end

@@ -1,4 +1,4 @@
-# Application composition (0.12)
+# Application composition (0.13)
 
 Load `addons/Interface.lua` from the same pinned revision as `Library.lua`.
 This addon composes native controls; it does not install gameplay workers or
@@ -57,8 +57,9 @@ resize target with mouse/touch drag and arrow-key increments when selected.
 `box:SetPopOutSize(width, height)` is the non-drag API; sizes are logical pixels
 and clamped to the viewport. Existing width/max-body-height APIs remain intact.
 
-Window `LogoOnly=true` is the default; the logo scales from 24 to 44px with sidebar
-width (16%, clamped to 24–44px). Set `LogoOnly=false` to retain the legacy title presentation. The footer
+Window `LogoOnly=true` is the default; the logo scales with sidebar
+width (14%, clamped to 22–32px) inside a centered 40px glass header. The header
+shares navigation side insets, has a 12px radius and reserves 8px before the first menu. Set `LogoOnly=false` to retain the legacy title presentation. The footer
 has a 32px strip centered over the content area, excluding the sidebar, with 40px
 side reserves. Text segments ellipsize proportionally when space is limited. Pass static and copyable segments
 separately: `Footer={{Text="Script v1"},{Text="Discord",Copyable=true,CopyText=url}}`.
@@ -76,4 +77,4 @@ content width, and keeps explicit compact mode compact. `SetSidebarWidth` establ
 a new preferred ratio. Set `ResponsiveSidebar=false` for a fixed sidebar width.
 The minimum resizable window reserves space for both sidebar and content.
 Subcategory rails share the tabbox 32px/26px rail/chip geometry and material tokens,
-with a 16px gap before modules. Horizontal overflow remains scrollable.
+with an 8px gap before modules. Horizontal overflow remains scrollable.

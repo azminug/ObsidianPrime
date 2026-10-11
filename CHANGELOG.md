@@ -1,3 +1,11 @@
+## Imperium 0.13 · 2026-10-11
+
+- Tighten subcategory-to-module clearance from 16px to 8px without changing capsule geometry or scroll overflow.
+- Anchor the responsive logo in a 40px rounded glass header aligned with navigation insets; maintain an 8px gap to the first menu.
+- Scale logos to 14% of sidebar width, clamped to 22–32px, with the shared gradient rim and opaque/theme support.
+- Preserve legacy titled headers, responsive/compact sidebar modes, footer alignment and native controls.
+- Pin application integrations to `imperium-v0.13.0`.
+
 ## Imperium 0.12 · 2026-10-11
 
 - Subcategory capsules use tabbox rail/chip dimensions and material tokens, with 16px clearance before cards.
