@@ -14,3 +14,4 @@ ImperiumPreview.bundle.lua
 roblox.yml
 
 !tests/responsive-shell-smoke.lua
+!tests/capsule-smoke.lua

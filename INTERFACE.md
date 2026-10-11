@@ -1,4 +1,4 @@
-# Application composition (0.14)
+# Application composition (0.15)
 
 Load `addons/Interface.lua` from the same pinned revision as `Library.lua`.
 This addon composes native controls; it does not install gameplay workers or
@@ -80,3 +80,12 @@ a new preferred ratio. Set `ResponsiveSidebar=false` for a fixed sidebar width.
 The minimum resizable window reserves space for both sidebar and content.
 Subcategory rails share the tabbox 32px/26px rail/chip geometry and material tokens,
 with 4px base clearance before modules (up to 8px including module inset). Horizontal overflow remains scrollable.
+
+The Cosmic capsule contains the window logo, a seven-segment heartbeat and telemetry.
+`Appearance:SetTelemetry(fps,ping)` updates the text and triggers one bounded beat,
+including unchanged numeric readings. Hidden/reduced-motion capsules do not animate.
+A click or keyboard activation opens the menu; Ctrl+M toggles minimize/restore.
+Pointer drag has an activation threshold and suppression after release. The shortcut
+hint appears only on mouse hover with mouse and keyboard available. Native minimized
+labels remain opt-in through the existing APIs, separate from the basic capsule.
+Use the game/script version in application footers, not the UI library version.

@@ -1,3 +1,11 @@
+## Imperium 0.15 · 2026-10-11
+
+- Streamline the status capsule to logo, live heartbeat and FPS/ping, using the menu font family and theme registry.
+- Remove the title, grip dots and plus/minus glyph. Whole-capsule activation opens the menu; drag never activates it.
+- Show the Ctrl+M hint only on mouse hover when keyboard and mouse are available; keep keyboard and native minimized-label APIs.
+- Drive bounded irregular beats from telemetry updates; stop on hide, reduced motion and unload without an extra render loop.
+- Application footers show game/script version separately from the copyable Discord invitation.
+
 ## Imperium 0.14 · 2026-10-11
 
 - Replace the inset logo capsule with a full-width gradient banner, rounded square logo and title; below 180px show a centered logo only.

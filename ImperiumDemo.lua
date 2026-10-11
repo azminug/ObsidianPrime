@@ -1,4 +1,4 @@
--- Imperium Frosted 0.14. Local preview; no gameplay remotes or automation.
+-- Imperium Frosted 0.15. Local preview; no gameplay remotes or automation.
 local env = (getgenv and getgenv()) or _G
 local OWNER = "ObsidianPrimeDemo"
 local function fetch(path)
@@ -104,7 +104,7 @@ local ok, err = xpcall(function()
     Layout:AddButton({Text="Move window right",Func=function() Appearance:MoveWindow(40,0) end})
     Layout:AddButton({Text="Move window up",Func=function() Appearance:MoveWindow(0,-40) end})
     Layout:AddButton({Text="Move window down",Func=function() Appearance:MoveWindow(0,40) end})
-    Layout:AddLabel("Drag capsule to move; click to minimize/restore. Tab: focus Â· Enter: activate Â· Escape: release Â· Ctrl+M: minimize.",true)
+    Layout:AddLabel("Drag capsule to move; click to open the menu. Tab: focus Â· Enter: activate Â· Escape: release Â· Ctrl+M: minimize.",true)
     Layout:AddButton({Text="Unload preview",Func=function() Library:Unload() end})
     local Showcase = fetch("addons/Showcase.lua").build(Library,Window,fetch,Appearance)
     Appearance:FinishBuild()
@@ -139,6 +139,6 @@ local ok, err = xpcall(function()
     end)
     record("Preview loaded; telemetry connected")
     Library.PrimePreview={Appearance=Appearance,Materials=Materials,Showcase=Showcase,Tabs={Home=Home,Fishing=Fishing,Settings=Settings}}
-    print("[Imperium Frosted 0.14] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
+    print("[Imperium Frosted 0.15] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
 end,function(message) return debug.traceback(tostring(message),2) end)
 if not ok then pcall(function() Library:Unload() end);error("[Imperium Frosted] "..tostring(err),0) end

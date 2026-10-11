@@ -54,34 +54,72 @@ function Cosmic.new(Library, Window)
         NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(0.5, 0.72), NumberSequenceKeypoint.new(1, 0.2),
     }) }, rim)
 
-    local dock = create("TextButton", { Name = "Minimize or restore Imperium", Text = "", AutoButtonColor = false,
+    local dock = create("TextButton", { Name = "Open Imperium menu", Text = "", AutoButtonColor = false,
         BackgroundColor3 = Color3.fromRGB(35, 33, 44), BackgroundTransparency = 0.25,
-        BorderSizePixel = 0, Size = UDim2.fromOffset(320, 38), Position = UDim2.fromOffset(20, 20),
+        BorderSizePixel = 0, Size = UDim2.fromOffset(256, 38), Position = UDim2.fromOffset(20, 20),
         ZIndex = 30, Selectable = true }, main.Parent)
     create("UICorner", { CornerRadius = UDim.new(1, 0) }, dock)
     self.Dock = dock
     local dockStroke = create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Color = Color3.fromRGB(151, 140, 164), Thickness = 1 }, dock)
     local dockScale = create("UIScale", { Scale = 1 }, dock)
-    for x = 0, 1 do
-        for y = 0, 2 do
-            local dot = create("Frame", {Position=UDim2.fromOffset(17+x*6,12+y*6),Size=UDim2.fromOffset(3,3),
-                BackgroundColor3=Color3.fromRGB(221,203,240),BorderSizePixel=0,ZIndex=31},dock)
-            create("UICorner", {CornerRadius=UDim.new(1,0)},dot)
+    local sourceLogo=main:FindFirstChild("PrimeLogo",true)
+    local dockLogo=create("ImageLabel",{Name="ImperiumCapsuleLogo",BackgroundTransparency=1,
+        Position=UDim2.fromOffset(12,7),Size=UDim2.fromOffset(24,24),ZIndex=31},dock)
+    if sourceLogo and sourceLogo:IsA("ImageLabel") then
+        for _,property in ipairs({"Image","ImageRectOffset","ImageRectSize","ImageColor3"}) do dockLogo[property]=sourceLogo[property] end
+        create("UICorner",{CornerRadius=UDim.new(0,6)},dockLogo)
+    else
+        local icon=Library:GetCustomIcon("sparkles")
+        if icon then Library:ApplyLucideIcon(dockLogo,icon) end
+    end
+    local waveform=create("Frame",{Name="ImperiumHeartbeat",BackgroundTransparency=1,
+        Position=UDim2.fromOffset(50,9),Size=UDim2.fromOffset(38,20),ZIndex=31},dock)
+    local waveSegments={}
+    for index=1,7 do
+        local line=create("Frame",{Name="PulseSegment"..index,AnchorPoint=Vector2.new(.5,.5),
+            BorderSizePixel=0,BackgroundColor3=Library.Scheme.AccentColor,ZIndex=31},waveform)
+        create("UICorner",{CornerRadius=UDim.new(1,0)},line)
+        Library.Registry[line]={BackgroundColor3="AccentColor"}
+        waveSegments[index]=line
+    end
+    local pulseTimer,pulseGeneration=nil,0
+    local random=Random.new()
+    local function wave(amplitude,duration)
+        local points={{0,10},{8,10},{12,10-amplitude*.25},{16,10+amplitude},
+            {21,10-amplitude},{25,10+amplitude*.3},{29,10},{38,10}}
+        for index,line in ipairs(waveSegments) do
+            local a,b=points[index],points[index+1]
+            local dx,dy=b[1]-a[1],b[2]-a[2]
+            animate(line,{Position=UDim2.fromOffset((a[1]+b[1])/2,(a[2]+b[2])/2),
+                Size=UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),1.5),Rotation=math.deg(math.atan2(dy,dx)),
+                BackgroundTransparency=amplitude>4 and .12 or .32},duration)
         end
     end
-    create("TextLabel", { BackgroundTransparency = 1, Position = UDim2.fromOffset(43, 0), Size = UDim2.fromOffset(90, 38),
-        Text = "Imperium", Font = Enum.Font.GothamMedium, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left,
-        TextColor3 = Color3.fromRGB(247, 243, 250), ZIndex = 31 }, dock)
-    local status = create("TextLabel", { BackgroundTransparency = 1, Position = UDim2.fromOffset(140, 0), Size = UDim2.new(1, -174, 1, 0),
-        Text = self.Status, Font = Enum.Font.Gotham, TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd,
-        TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = Color3.fromRGB(222, 213, 232), ZIndex = 31 }, dock)
-    local indicator = create("TextLabel", { BackgroundTransparency = 1, Position = UDim2.new(1, -30, 0, 0), Size = UDim2.fromOffset(24, 38),
-        Text = "−", Font = Enum.Font.Gotham, TextSize = 20, TextColor3 = Color3.fromRGB(221, 183, 219), ZIndex = 31 }, dock)
-    local hint = create("TextLabel", { BackgroundColor3 = Color3.fromRGB(35, 33, 44), BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 1, 6), Size = UDim2.fromOffset(300, 32), Text = "Minimize menu · Ctrl+M",
-        Font = Enum.Font.Gotham, TextSize = 13, TextColor3 = Color3.fromRGB(247, 243, 250), Visible = false, ZIndex = 32 }, dock)
+    local function stopPulse()
+        pulseGeneration=pulseGeneration+1
+        if pulseTimer then task.cancel(pulseTimer);pulseTimer=nil end
+        for _,line in ipairs(waveSegments) do
+            if Spring then Spring:Cancel(line) end
+            if tweens[line] then tweens[line]:Cancel();tweens[line]=nil end
+        end
+        wave(3,0)
+    end
+    wave(3,0)
+    local status = create("TextLabel", {Name="PrimeValue", BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(104, 0), Size = UDim2.new(1, -116, 1, 0),
+        Text = "-- FPS · -- ms", FontFace = Library.Scheme.Font, TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd,
+        TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = Library.Scheme.FontColor, ZIndex = 31 }, dock)
+    local hint = create("TextLabel", {Name="ImperiumCapsuleTooltip", BackgroundColor3 = Color3.fromRGB(35, 33, 44), BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 1, 6), Size = UDim2.fromOffset(256, 28), Text = "Open menu · Ctrl+M",
+        FontFace = Library.Scheme.Font, TextSize = 13, TextColor3 = Library.Scheme.FontColor, Visible = false, ZIndex = 32 }, dock)
     create("UICorner", { CornerRadius = UDim.new(0, 8) }, hint)
+    for _,label in ipairs({status,hint}) do
+        Library.Registry[label]={FontFace=function() return Font.new(Library.Scheme.Font.Family,Enum.FontWeight.Regular,Library.Scheme.Font.Style) end,
+            TextColor3="FontColor"}
+        label.FontFace=Library.Registry[label].FontFace()
+    end
+    self.DockLogo,self.Waveform,self.TelemetryLabel,self.Hint=dockLogo,waveform,status,hint
     local details
     if Window.MinimizedBody then
         details=create("Frame",{Name="ImperiumCapsuleDetails",BackgroundColor3=Library.Scheme.MainColor,
@@ -96,12 +134,12 @@ function Cosmic.new(Library, Window)
         end
         self.Details=details
     end
-    local function hover(value)
-        hint.Visible = value and Library.Toggled and not (details and details.Visible)
+    local function hover(value,mouse)
+        hint.Visible = value and mouse==true and Input.MouseEnabled and Input.KeyboardEnabled and Library.Toggled and not (details and details.Visible)
         animate(dockScale, { Scale = value and 1.025 or 1 }, 0.16)
         animate(dockStroke, { Color = value and Color3.fromRGB(221, 183, 219) or Color3.fromRGB(151, 140, 164) }, 0.16)
     end
-    bind(dock.MouseEnter, function() hover(true) end)
+    bind(dock.MouseEnter, function() hover(true,true) end)
     bind(dock.MouseLeave, function() hover(false) end)
     bind(dock.SelectionGained, function() hover(true) end)
     bind(dock.SelectionLost, function() hover(false) end)
@@ -142,9 +180,8 @@ function Cosmic.new(Library, Window)
         mini.Visible = false
         dock.Visible = Library.Toggled
         if details then details.Visible=Library.Toggled and self.Minimized and (Window.MinimizedBody.Visible or self.ExplicitSubtitle==true) end
-        if not dock.Visible then hint.Visible = false end
-        indicator.Text = self.Minimized and "+" or "−"
-        hint.Text = self.Minimized and "Restore menu · Ctrl+M" or "Minimize menu · Ctrl+M"
+        hint.Visible = false
+        if not dock.Visible then stopPulse() end
     end
     bind(mini:GetPropertyChangedSignal("Visible"), syncShell)
     bind(main:GetPropertyChangedSignal("Visible"), syncShell)
@@ -208,7 +245,7 @@ function Cosmic.new(Library, Window)
         self.Status = text and text ~= "" and text or "Ready"
         self.ExplicitSubtitle=text~=nil and text~=""
         syncShell()
-        hint.Text = self.Status .. " · Ctrl+M"
+        hint.Text = "Open menu · Ctrl+M"
     end
     local dragInput, dragStart, dragPosition, dragged, suppressUntil = nil, nil, nil, false, 0
     bind(dock.InputBegan, function(input)
@@ -241,11 +278,22 @@ function Cosmic.new(Library, Window)
     end)
     connections[#connections + 1] = Library:OnActivate(dock, function()
         if dragged or os.clock() < suppressUntil then dragged = false; return end
-        Window:ToggleMinimized()
+        hint.Visible=false
+        Window:SetMinimized(false)
     end)
     function self:SetTelemetry(fps, ping)
         local value = string.format("%s FPS · %s ms", tostring(fps), tostring(ping))
         if status.Text ~= value then status.Text = value end
+        -- A bounded beat on each real telemetry update, never an independent cosmetic loop.
+        if not self.Alive or self.ReducedMotion or not dock.Visible then return end
+        if pulseTimer then task.cancel(pulseTimer);pulseTimer=nil end
+        pulseGeneration=pulseGeneration+1
+        local generation=pulseGeneration
+        wave(random:NextNumber(5.5,8.5),.16)
+        pulseTimer=task.delay(random:NextNumber(.17,.25),function()
+            pulseTimer=nil
+            if self.Alive and generation==pulseGeneration and dock.Visible and not self.ReducedMotion then wave(3,.35) end
+        end)
     end
 
     function self:SetOpaque(value)
@@ -379,6 +427,7 @@ function Cosmic.new(Library, Window)
         if Spring then Spring:SetReduced(self.ReducedMotion) end
         Library.ReducedMotion = self.ReducedMotion
         if self.ReducedMotion then
+            stopPulse()
             self.Generation = self.Generation + 1
             for object, tween in pairs(tweens) do tween:Cancel(); tweens[object] = nil end
             dockScale.Scale = 1
@@ -490,10 +539,15 @@ function Cosmic.new(Library, Window)
     syncShell()
     Library:OnUnload(function()
         self.Alive = false
+        stopPulse()
         self.Generation = self.Generation + 1
         for _, connection in ipairs(connections) do connection:Disconnect() end
         for _, tween in pairs(tweens) do tween:Cancel() end
-        for _, object in ipairs(owned) do object:Destroy() end
+        for _, object in ipairs(owned) do
+            if Spring then Spring:Cancel(object) end
+            Library:RemoveFromRegistry(object)
+            object:Destroy()
+        end
         Window.SetMinimized, Window.ToggleMinimized, Window.IsMinimized = old.Minimize, old.ToggleMinimized, old.IsMinimized
         Window.Toggle, Window.SetMinimizedSubtitle = old.Toggle, old.Subtitle
         Library.ActivationHandlers[dock] = nil

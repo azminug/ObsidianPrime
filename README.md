@@ -5,11 +5,11 @@ An ObsidianUltra fork for Imperium. Based on
 originally [deividcomsono/Obsidian](https://github.com/deividcomsono/Obsidian).
 Original attribution and LICENSE are preserved.
 
-## Frosted workbench 0.14
+## Frosted workbench 0.15
 
 - Cosmic #23212C, Builder Sans, a window without divider lines, one-pixel specular rims, directional glass shading, and soft card shadows. The window's outer shadow remains off by default.
 - Spring-driven window drag, vertical tab/tabbox fade, group collapse, switches, and scale/fade minimize and restore. Button feedback changes light without shrinking text.
-- Draggable 320x38 capsule with live FPS/ping, hover feedback, and click to minimize/restore. It starts above the window, away from the hotbar.
+- Draggable 256x38 capsule with logo, telemetry-driven heartbeat and FPS/ping. Click anywhere to open the menu; Ctrl+M toggles it. It starts above the window, away from the hotbar.
 - Fishing uses a single grouped settings list, a slim slider with an exact-value entry, standard chevrons, and live client statistics alongside it. No duplicate Cast/Filters navigation and no fabricated catch log.
 - Opaque mode, reduced motion, keyboard focus, position controls, and optional world blur.
 - Continuous sidebar glass from logo to footer, a subtle vertical hairline, centered icon alignment, clipped search text, complete capsule curves, and full-body hover lighting.
@@ -50,7 +50,7 @@ demo's prior instance.
 Keep calling the native Library/Window/group methods. `Showcase.lua` is the optional workbench and is not required by an application. Use the tagged build below so later edits to `main` do not change an existing UI:
 
 ```lua
-local repo = "https://raw.githubusercontent.com/azminug/ObsidianPrime/imperium-v0.14.0/"
+local repo = "https://raw.githubusercontent.com/azminug/ObsidianPrime/imperium-v0.15.0/"
 local function loadModule(path)
     local source = game:HttpGet(repo .. path)
     return assert(loadstring(source, "@ObsidianPrime/" .. path))()
@@ -96,6 +96,6 @@ WCAG 2.2 AA remains the target. [ACCESSIBILITY.md](ACCESSIBILITY.md) records cov
 Upstream API documentation: https://docs.mspaint.cc/obsidian
 Fork provenance and baseline: [IMPERIUM.md](IMPERIUM.md).
 
-## Application composition 0.14
+## Application composition 0.15
 
 See [INTERFACE.md](INTERFACE.md) for adaptive columns, horizontal banners, and a searchable item/detail browser that keeps native option persistence. Popup surfaces are solid Cosmic; window glass remains configurable. Footer information is centered.

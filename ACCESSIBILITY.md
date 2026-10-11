@@ -105,3 +105,13 @@ full-width banner, logo bounds and vertical insets, 4–8px category clearance,
 compact/manual sidebar modes and content-centered footer at 480/680/892px and
 125% DPI. No additional motion loop or pointer-only action was introduced.
 Physical touch, complete keyboard navigation and 200% text reflow remain unverified.
+
+## 0.15 status capsule
+
+The entire 256x38 capsule is an activation target. Text follows the menu font family,
+and the decorative heartbeat conveys no exclusive information. Beats are triggered
+by real telemetry updates, vary softly in amplitude and stop when hidden or reduced
+motion is enabled. Keyboard activation remains available; Ctrl+M is a mouse-hover
+hint, not a permanently displayed extra control. Lifecycle mocks and live fixture
+checks cover restore, repeated activation, motion, hidden state and metrics bounds.
+Physical touch and complete assistive-technology behavior remain unverified.
