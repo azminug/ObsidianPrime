@@ -1647,6 +1647,7 @@ export type Library = {
             Footer: (string | { string | FooterSegment })?,
             CopyableFooter: boolean?,
             LogoOnly: boolean?,
+            SidebarBanner: boolean?,
             Position: UDim2?,
             Size: UDim2?,
             Icon: string?,

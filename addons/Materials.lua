@@ -6,7 +6,7 @@ function Materials.new(Library)
     local connections, timers = {}, {}
     self.Tokens={WindowRadius=16,CardRadius=12,ControlRadius=8,CapsuleRadius=999,RimTopOpacity=.28,RimBottomOpacity=.09,HoverOpacity=.07,ScrollbarWidth=3}
     self.LockRadius=true
-    local alphas = {Window=.48, Group=.36, Sidebar=.65, SidebarHead=.55, Header=.35, Panel=.20, Popup=0, Control=.35, Recess=.20}
+    local alphas = {Window=.48, Group=.36, Sidebar=.65, SidebarBanner=.4, Header=.35, Panel=.20, Popup=0, Control=.35, Recess=.20}
     local function animate(object,goals)
         if Library.PrimeMotion then Library.PrimeMotion:To(object,goals,30,1)
         else for key,value in pairs(goals) do object[key]=value end end
@@ -28,6 +28,11 @@ function Materials.new(Library)
         if not self.LockRadius then return end
         local parent=corner.Parent
         if not parent then return end
+        if parent.Name=="PrimeSidebarBanner" then
+            corner.CornerRadius=UDim.new(0,16);corner.TopLeftRadius=UDim.new(0,16)
+            corner.TopRightRadius=UDim.new(0,0);corner.BottomLeftRadius=UDim.new(0,0);corner.BottomRightRadius=UDim.new(0,0)
+            return
+        end
         if parent.Name=="PrimeSidebarPane" then
             local radius=UDim.new(0,16)
             for key,value in pairs({CornerRadius=radius,TopLeftRadius=radius,BottomLeftRadius=radius,
@@ -144,7 +149,7 @@ function Materials.new(Library)
         if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then self:StyleText(object) end
         if object:IsA("ScrollingFrame") then self:StyleScroll(object) end
         if object.Name=="PrimeSettingRow" then self:BindButton(object) end
-        if object.Name=="PrimeSidebar" or object.Name=="PrimeHeader" then
+        if object.Name=="PrimeSidebar" or object.Name=="PrimeHeader" or object.Name=="PrimeHeaderTitle" then
             object.BackgroundTransparency=1
             self.Surfaces[object]=nil
             return
@@ -169,7 +174,7 @@ function Materials.new(Library)
             if object.Name=="Main" and object.Parent and object.Parent:IsA("ScreenGui") then role="Window"
             elseif object.Name=="PrimeGroupedSurface" or object.Name=="PrimeFloatingSurface" then role="Group"
             elseif object.Name=="PrimeTabboxSurface" and object.BackgroundTransparency<.95 then role="Group"
-            elseif object:GetAttribute("ImperiumSidebarHead") then role="SidebarHead"
+            elseif object.Name=="PrimeSidebarBanner" then role="SidebarBanner"
             elseif object.Name=="PrimeSidebarPane" then role="Sidebar"
             elseif object.Name=="PrimeHeaderSurface" then role="Header"
             elseif object.Name=="PrimeRecess" then role="Recess"
@@ -197,7 +202,7 @@ function Materials.new(Library)
             falloff.Enabled=not self.Opaque;falloff.Parent=object
         end
         -- One subtle rim; native outlines still supply geometry and hit targets.
-        if (role=="Panel" or role=="Group" or role=="Popup" or role=="SidebarHead") and not object:FindFirstChild("ImperiumMaterialRim") then
+        if (role=="Panel" or role=="Group" or role=="Popup") and not object:FindFirstChild("ImperiumMaterialRim") then
             object:SetAttribute("ImperiumRimOwner",true)
             for _,child in ipairs(object:GetChildren()) do
                 if child:IsA("UIStroke") and Library.Registry[child] then child.Enabled=false end

@@ -1,3 +1,11 @@
+## Imperium 0.14 · 2026-10-11
+
+- Replace the inset logo capsule with a full-width gradient banner, rounded square logo and title; below 180px show a centered logo only.
+- Preserve responsive sidebar ratios and compact mode. Logo scales from 26 to 40px with sidebar width.
+- Reduce category clearance to 4px plus the native module inset; retain tabbox capsule dimensions and materials.
+- Preserve content-centered footer with static version and a separate copyable Discord invitation.
+- Pin application integrations to `imperium-v0.14.0`.
+
 ## Imperium 0.13 · 2026-10-11
 
 - Tighten subcategory-to-module clearance from 16px to 8px without changing capsule geometry or scroll overflow.

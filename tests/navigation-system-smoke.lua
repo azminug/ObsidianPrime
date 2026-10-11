@@ -73,8 +73,8 @@ local ok,err=xpcall(function()
             local icon=entry.Icon
             local logoIcon=logo:FindFirstChildWhichIsA("ImageLabel")
             if icon and logoIcon then
-                check(near(logo.AbsolutePosition.X+logo.AbsoluteSize.X/2,
-                    logoIcon.AbsolutePosition.X+logoIcon.AbsoluteSize.X/2),"responsive logo is centered in sidebar")
+                check(logoIcon.AbsolutePosition.X>=logo.AbsolutePosition.X
+                    and logoIcon.AbsolutePosition.X+logoIcon.AbsoluteSize.X<=logo.AbsolutePosition.X+logo.AbsoluteSize.X,"responsive logo stays within sidebar banner")
             end
             local leading=holder.AbsolutePosition.X+entry.Padding.PaddingLeft.Offset*L.DPIScale
             check(footer:FindFirstChildOfClass("UIListLayout").HorizontalAlignment==Enum.HorizontalAlignment.Center,"footer information centered")

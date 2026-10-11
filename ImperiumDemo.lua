@@ -1,4 +1,4 @@
--- Imperium Frosted 0.13. Local preview; no gameplay remotes or automation.
+-- Imperium Frosted 0.14. Local preview; no gameplay remotes or automation.
 local env = (getgenv and getgenv()) or _G
 local OWNER = "ObsidianPrimeDemo"
 local function fetch(path)
@@ -20,7 +20,7 @@ local ok, err = xpcall(function()
     Library.PrimeMotion = fetch("addons/Motion.lua").new()
     local viewport = workspace.CurrentCamera.ViewportSize
     local Window = Library:CreateWindow({
-        Title = "IMPERIUM", Footer = "", Icon = "sparkles", CopyableFooter = false,
+        Title = "Imperium", Footer = "", Icon = "sparkles", CopyableFooter = false,
         Size = UDim2.fromOffset(math.min(940,viewport.X-56), math.min(650,viewport.Y-145)),
         Center = true, AutoShow = true, ShowCustomCursor = false, Resizable = true,
         CornerRadius = 16, ToggleKeybind = Enum.KeyCode.U, Glow = false, GroupFade = true,
@@ -139,6 +139,6 @@ local ok, err = xpcall(function()
     end)
     record("Preview loaded; telemetry connected")
     Library.PrimePreview={Appearance=Appearance,Materials=Materials,Showcase=Showcase,Tabs={Home=Home,Fishing=Fishing,Settings=Settings}}
-    print("[Imperium Frosted 0.13] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
+    print("[Imperium Frosted 0.14] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
 end,function(message) return debug.traceback(tostring(message),2) end)
 if not ok then pcall(function() Library:Unload() end);error("[Imperium Frosted] "..tostring(err),0) end

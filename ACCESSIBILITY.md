@@ -97,3 +97,11 @@ padding and 8px first-menu clearance at 480/680/892px. Subcategory clearance is
 now 8px, retaining 32px rail targets. Compact mode, footer alignment, rapid
 switching and 125% DPI remain covered. Physical touch, full keyboard/gamepad and
 200% text reflow remain unverified; these checks do not certify WCAG conformance.
+
+## 0.14 responsive banner
+
+Runtime geometry checks cover title visibility above/below the 180px threshold,
+full-width banner, logo bounds and vertical insets, 4–8px category clearance,
+compact/manual sidebar modes and content-centered footer at 480/680/892px and
+125% DPI. No additional motion loop or pointer-only action was introduced.
+Physical touch, complete keyboard navigation and 200% text reflow remain unverified.
