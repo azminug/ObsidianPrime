@@ -1,3 +1,14 @@
-tests/
+tests/*
+!tests/imperium.test.lua
+!tests/cosmic.test.lua
+!tests/contrast.py
+!tests/motion.test.py
+!tests/api-parity.py
+!tests/workbench-smoke.lua
+!tests/glass-motion-smoke.lua
+!tests/component-system-smoke.lua
+!tests/navigation-system-smoke.lua
+!tests/shell-polish-smoke.lua
+ImperiumPreview.bundle.lua
 .claude/worktrees/*
 roblox.yml

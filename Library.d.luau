@@ -1312,6 +1312,9 @@ export type Dialog = {
 
 
 export type Window = {
+    MiniFrame: Frame?,
+    MinimizedBody: Frame?,
+    MinimizedSubtitleLabel: TextLabel?,
     AlwaysOnTop: boolean,
     Snapping: boolean?,
     IsSidebarCompacted: (self: Window) -> boolean,
@@ -1382,6 +1385,12 @@ export type Window = {
 
 --// Main Library Type
 export type Library = {
+    SmoothDrag: boolean,
+    ReducedMotion: boolean,
+    PrimeMotion: any?,
+    PrimeMaterial: any?,
+    ActivationHandlers: { [GuiButton]: () -> () },
+    OnActivate: (self: Library, Button: GuiButton, Callback: (...any) -> ()) -> RBXScriptConnection,
     -- Properties
     LocalPlayer: Player,
     DevicePlatform: Enum.Platform?,
@@ -1660,6 +1669,10 @@ export type Library = {
             Glow: boolean?,
             AlwaysOnTop: boolean?,
             Font: Font | Enum.Font?,
+            FontFamily: string?,
+            SidebarSubTabs: boolean?,
+            SubTabUnderline: boolean?,
+            FrameEdgeDrag: boolean?,
             ToggleKeybind: Enum.KeyCode?,
             ShowMobileButtons: boolean?,
             MobileButtonsSide: "Left" | "Right"?,
@@ -1685,6 +1698,7 @@ export type Library = {
                 Dropdown: boolean?,
                 KeyPicker: boolean?,
             }?,
+            GroupFade: boolean?,
             TabTransitionTime: number?,
             TabSwipeOffset: number?,
             TabSwipeFrom: ("left" | "right" | "top" | "bottom" | "auto" | string)?,

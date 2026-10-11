@@ -1,0 +1,53 @@
+-- Execute only after ImperiumPreview.bundle.lua on the preview client.
+-- Mutates UI test values; no gameplay actions, clipboard writes, or profile files.
+local L = assert(getgenv().ObsidianPrimeDemo, "Run the preview first")
+local S, O, T = L.PrimePreview.Showcase, L.Options, L.Toggles
+local function check(value, message) assert(value, message); print("[Workbench PASS]", message) end
+local original, exported = S.SaveManager:SaveJSON("before smoke")
+assert(exported)
+local ok, err = xpcall(function()
+    T.UltraDependency:SetValue(true)
+    O.UltraMulti:SetValue({Common=true,Legendary=true})
+    O.UltraPriority:SetValue({"Speed","Safety","Quality"})
+    O.UltraSlider:SetValue(73.5)
+    T.UltraCheckbox:SetValue(false)
+    O.UltraToggleKey:SetValue({"F8","Toggle"})
+    O.UltraColor:SetValueRGB(Color3.fromRGB(180,140,210),.4)
+    local json, saved = S.SaveManager:SaveJSON("runtime roundtrip")
+    check(saved,"config JSON export")
+    O.UltraSlider:SetValue(1);T.UltraCheckbox:SetValue(true);O.UltraMulti:SetValue({Rare=true})
+    local loaded,message = S.SaveManager:LoadJSON(json)
+    check(loaded,message or "config JSON import")
+    check(O.UltraSlider.Value==73.5 and not T.UltraCheckbox.Value and O.UltraMulti.Value.Common
+        and O.UltraMulti.Value.Legendary and O.UltraPriority.Value[1]=="Speed" and O.UltraToggleKey.Value=="F8", "native config values roundtrip")
+    S.Tabs.Layouts:Show()
+    local group=S.Groups.Collapsible
+    group:SetCollapsed(true);task.wait(.3);check(group.Collapsed,"collapse")
+    group:SetCollapsed(false);group:SetPoppedOut(true);task.wait(.3);check(group.PoppedOut,"group pop-out")
+    group:SetPoppedOut(false)
+    S.Groups.Tabbox:SetPoppedOut(true);check(S.Groups.Tabbox.PoppedOut,"tabbox pop-out");S.Groups.Tabbox:SetPoppedOut(false)
+    S.Tabs.Components:Show()
+    O.UltraSingle:Expand();check(O.UltraSingle:IsExpanded(),"dropdown expansion");O.UltraSingle:Collapse()
+    O.UltraPriority:Expand();check(O.UltraPriority:IsExpanded(),"priority expansion");O.UltraPriority:Collapse()
+    O.UltraColor.ColorMenu:Open()
+    check(O.UltraColor.ColorMenu.Menu.BackgroundTransparency>0,"color picker material")
+    O.UltraColor.ColorMenu:Close()
+    S.Tabs.Feedback:Show()
+    local dialog=S:OpenDialog();check(dialog~=nil,"native dialog");dialog:Dismiss();task.wait(.2)
+    local loader=S:OpenLoading(true);check(loader.IsError,"loading error")
+    loader:ShowErrorPage(false);loader:SetCurrentStep(2);check(loader.CurrentStep==2,"loading progress");loader:Destroy()
+    L:_BuildNotificationHistory()
+    local history=L.NotificationHistoryFrame
+    S.ThemeManager:ApplyTheme("Default");local previous=history.BackgroundColor3
+    S.ThemeManager:ApplyTheme("Imperium");check(previous~=history.BackgroundColor3,"theme-aware history")
+    L.PrimePreview.Appearance:SetOpaque(true);check(history.BackgroundTransparency==0,"opaque popup")
+    L.PrimePreview.Appearance:SetOpaque(false);check(history.BackgroundTransparency>0,"glass popup")
+    local handle=L.Window:AddMinimizedLabel("Native API check")
+    L.Window:SetMinimized(true);task.wait(.5)
+    check(handle.Label:IsDescendantOf(L.PrimePreview.Appearance.Dock) and L.PrimePreview.Appearance.Details.Visible,"minimized label visibility")
+    handle:SetText("Updated");handle:SetVisible(false);check(not handle.Label.Visible,"minimized label state")
+    handle:Destroy();L.Window:SetMinimized(false);task.wait(.5)
+end,debug.traceback)
+S.SaveManager:LoadJSON(original)
+if not ok then error(err,0) end
+print("[Workbench SMOKE COMPLETE]")

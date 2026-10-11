@@ -57,6 +57,10 @@ local ThemeManager = {
     ContrastWasPoor = false,
 
     BuiltInThemes = {
+        ["Imperium"] = {
+            0,
+            { FontColor = "f7f3fa", MainColor = "2f2c3a", AccentColor = "ddb7db", BackgroundColor = "23212c", OutlineColor = "978ca4", BackgroundImage = "", FontFace = "BuilderSansMedium" },
+        },
         ["Default"] = {
             1,
             { FontColor = "ffffff", MainColor = "191919", AccentColor = "7d55ff", BackgroundColor = "0f0f0f", OutlineColor = "282828", BackgroundImage = "" },
@@ -936,7 +940,7 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         Text = "Font Face",
         Default = "Code",
         
-        Values = { "BuilderSans", "Code", "Fantasy", "Gotham", "Jura", "Roboto", "RobotoMono", "SourceSans" },
+        Values = { "BuilderSans", "BuilderSansMedium", "Code", "Fantasy", "Gotham", "GothamMedium", "Jura", "Roboto", "RobotoMono", "SourceSans" },
         AllowNull = false,
         Multi = false
     })

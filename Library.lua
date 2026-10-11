@@ -30,7 +30,7 @@ local Toggles = {}
 local Options = {}
 local Tooltips = {}
 
-local BaseURL = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
+local BaseURL = "https://raw.githubusercontent.com/azminug/ObsidianPrime/main/"
 local CustomImageManager = {}
 local CustomImageManagerAssets = {
     TransparencyTexture = {
@@ -164,6 +164,10 @@ end
 local Library = {
     LocalPlayer = LocalPlayer,
     IsRobloxFocused = true,
+    SmoothDrag = true,
+    PrimeMotion = nil,
+    ReducedMotion = false,
+    ActivationHandlers = setmetatable({}, { __mode = "k" }),
 
     --// Device \\--
     DevicePlatform = nil,
@@ -219,10 +223,10 @@ local Library = {
     NotificationBellMini = nil,
     --// Primary-text color per notification type; customizable by the user
     NotificationTypeColors = {
-        Error = Color3.fromRGB(255, 76, 76),
-        Warning = Color3.fromRGB(255, 176, 32),
-        Success = Color3.fromRGB(96, 216, 118),
-        Info = Color3.fromRGB(96, 165, 255),
+        Error = Color3.fromRGB(255, 238, 242),
+        Warning = Color3.fromRGB(255, 246, 224),
+        Success = Color3.fromRGB(230, 255, 235),
+        Info = Color3.fromRGB(235, 242, 255),
     },
 
     --// Dialogues \\--
@@ -247,7 +251,7 @@ local Library = {
     TweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 
     TabTransitionInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    TabSwipeOffset = 26,
+    TabSwipeOffset = 16,
     TabSwipeFrom = "bottom",
 
     WindowAnimationInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -278,11 +282,11 @@ local Library = {
     Options = Options,
 
     --// Options \\--
-    ToggleKeybind = Enum.KeyCode.RightControl,
+    ToggleKeybind = Enum.KeyCode.U,
     ShowToggleFrameInKeybinds = true,
 
     NotifyOnError = false,
-    ShowCustomCursor = true,
+    ShowCustomCursor = false,
     ForceCheckbox = false,
 
     CantDragForced = false,
@@ -302,17 +306,17 @@ local Library = {
     OriginalMinSize = Vector2.new(480, 360),
     MinSize = Vector2.new(480, 360),
     DPIScale = 1,
-    CornerRadius = 4,
+    CornerRadius = 12,
 
     --// Scheme \\--
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(15, 15, 15),
-        MainColor = Color3.fromRGB(25, 25, 25),
-        AccentColor = Color3.fromRGB(125, 85, 255),
-        OutlineColor = Color3.fromRGB(40, 40, 40),
-        FontColor = Color3.new(1, 1, 1),
-        Font = Font.fromEnum(Enum.Font.Code),
+        BackgroundColor = Color3.fromRGB(35, 33, 44),
+        MainColor = Color3.fromRGB(47, 44, 58),
+        AccentColor = Color3.fromRGB(221, 183, 219),
+        OutlineColor = Color3.fromRGB(151, 140, 164),
+        FontColor = Color3.fromRGB(247, 243, 250),
+        Font = Font.fromEnum(Enum.Font.BuilderSansMedium),
 
         RedColor = Color3.fromRGB(255, 50, 50),
         BlueColor = Color3.fromRGB(80, 155, 255),
@@ -423,7 +427,7 @@ local Templates = {
         FontFace = "Font",
         PlaceholderColor3 = function()
             local H, S, V = Library.Scheme.FontColor:ToHSV()
-            return Color3.fromHSV(H, S, V / 2)
+            return Color3.fromHSV(H, S, V * 0.8)
         end,
         Text = "",
         TextColor3 = "FontColor",
@@ -437,8 +441,8 @@ local Templates = {
 
     --// Library \\--
     Window = {
-        Title = "No Title",
-        Footer = "No Footer",
+        Title = "Imperium",
+        Footer = "ObsidianPrime",
         CopyableFooter = true,
 
         Position = UDim2.fromOffset(6, 6),
@@ -469,18 +473,23 @@ local Templates = {
         MinimizedSubtitle = "",
         AutoMinimize = false,
 
-        CornerRadius = 4,
+        CornerRadius = 12,
         NotifySide = "Right",
         DisableNotificationBell = false,
-        ShowCustomCursor = true,
+        ShowCustomCursor = false,
 
         --// Glow \\--
         --// Off by default and never forced. The glow is a visible render effect,
         --// so the user opts in themselves via Window:SetGlow(true) (or this flag).
         Glow = false,
 
-        Font = Enum.Font.Code,
-        ToggleKeybind = Enum.KeyCode.RightControl,
+        Font = Enum.Font.BuilderSansMedium,
+        -- Roblox content font family; e.g. an available SF Pro Text family asset.
+        FontFamily = nil,
+        SidebarSubTabs = false,
+        SubTabUnderline = false,
+        FrameEdgeDrag = true,
+        ToggleKeybind = Enum.KeyCode.U,
 
         ShowMobileButtons = true,
         MobileButtonsSide = "Left",
@@ -517,8 +526,8 @@ local Templates = {
             SubTabUnderline = true
         },
 
-        TabTransitionTime = 0.22,
-        TabSwipeOffset = 26,
+        TabTransitionTime = 0.20,
+        TabSwipeOffset = 16,
         TabSwipeFrom = "bottom",
         TabButtonsStyle = {
             --// Fork defaults: the sidebar tabs sit in a 6px inset with 4px between
@@ -558,8 +567,8 @@ local Templates = {
         FooterButtons = {}
     },
     Loading = {
-        Title = "mspaint",
-        Icon = 95816097006870,
+        Title = "Imperium",
+        Icon = "shield",
         IconSize = UDim2.fromOffset(30, 30),
 
         LoadingIcon = CustomImageManager.GetAsset("LoadingIcon"),
@@ -1873,6 +1882,15 @@ local function FillInstance(Table: { [string]: any }, Instance: GuiObject)
     end
 end
 
+function Library:OnActivate(Button, Callback)
+    local Connection = Button.Activated:Connect(Callback)
+    Library.ActivationHandlers[Button] = function()
+        if Connection.Connected then Library:SafeCallback(Callback) end
+    end
+    if Library.PrimeMaterial then Library.PrimeMaterial:BindButton(Button) end
+    return Connection
+end
+
 local function New(ClassName: string, Properties: { [string]: any }): any
     local Instance = Instance.new(ClassName)
 
@@ -1886,6 +1904,8 @@ local function New(ClassName: string, Properties: { [string]: any }): any
             Instance.ZIndex = Properties.Parent.ZIndex
         end)
     end
+
+    if Library.PrimeMaterial then Library.PrimeMaterial:Apply(Instance, Properties) end
 
     return Instance
 end
@@ -2469,6 +2489,7 @@ function Library:MakeDraggable(
     local Dragging = false
     local DragInput
     local Changed
+    local DragTween
     local InputBegan
     local InputChanged
 
@@ -2535,6 +2556,8 @@ function Library:MakeDraggable(
             return
         end
 
+        if DragTween then DragTween:Cancel(); DragTween = nil end
+        if Library.PrimeMotion then Library.PrimeMotion:Cancel(UI) end
         StartPos = Input.Position
         FramePos = UI.Position
         Dragging = true
@@ -2619,7 +2642,18 @@ function Library:MakeDraggable(
                 end
             end
 
-            UI.Position = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
+            local Target = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
+            if DragTween then DragTween:Cancel(); DragTween = nil end
+            if IsMainWindow and Library.SmoothDrag and not Library.ReducedMotion then
+                if Library.PrimeMotion then
+                    Library.PrimeMotion:To(UI, { Position = Target }, 32, 0.92)
+                else
+                    DragTween = TweenService:Create(UI, TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = Target })
+                    DragTween:Play()
+                end
+            else
+                UI.Position = Target
+            end
         end
     end)
 
@@ -2627,6 +2661,7 @@ function Library:MakeDraggable(
     Library:GiveSignal(InputBegan)
 
     UI.Destroying:Once(function()
+        if DragTween then DragTween:Cancel(); DragTween = nil end
         if InputChanged and InputChanged.Connected then
             InputChanged:Disconnect()
         end
@@ -2758,6 +2793,7 @@ end
 
 function Library:MakeLine(Frame: GuiObject, Info)
     local Line = New("Frame", {
+        Name = Frame.Name == "Main" and "ImperiumWindowDivider" or "Line",
         AnchorPoint = Info.AnchorPoint or Vector2.zero,
         BackgroundColor3 = "OutlineColor",
         LayoutOrder = Info.LayoutOrder or 0,
@@ -3040,7 +3076,7 @@ function Library:SkinTabButton(Button: TextButton)
         --// The marker belongs to the open tab alone: it is the one mark that does
         --// not answer to hover, so a pointer wandering the column cannot suggest
         --// two selected tabs at once.
-        local Lit = Skin.Active and not Skin.Compact
+        local Lit = Skin.Active and not Skin.Compact and not Library.PrimeSelectionEnabled
         Marker.Visible = not Skin.Compact
         TweenService:Create(Marker, Library.TweenInfo, {
             BackgroundTransparency = Lit and 0 or 1,
@@ -3051,7 +3087,7 @@ function Library:SkinTabButton(Button: TextButton)
         }):Play()
 
         TweenService:Create(Button, Library.TweenInfo, {
-            BackgroundTransparency = (not Skin.Compact and Skin.Active) and 0 or 1,
+            BackgroundTransparency = (not Skin.Compact and Skin.Active and not Library.PrimeSelectionEnabled) and 0 or 1,
         }):Play()
 
         ApplyIcon()
@@ -3186,32 +3222,29 @@ end
 --// Animations \\--
 local TransparencyCache = {}
 local ActiveTabTweens = setmetatable({}, { __mode = "k" })
-local SUBTAB_BAR_HEIGHT = 32
-local SUBTAB_IDLE_TRANSPARENCY = 0.4
+local SUBTAB_BAR_HEIGHT = 36
+local SUBTAB_IDLE_TRANSPARENCY = 0.10
 local SUBTAB_ICON_SIZE = 16
 local SUBTAB_SLIDE_TWEEN = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 --// Fraction of the chip the underline spans, and its gap above the chip's bottom edge
 local SUBTAB_UNDERLINE_WIDTH = 0.66
 local SUBTAB_UNDERLINE_GAP = 3
---// The tab row sits flush in the 34px header; the open tab is a soft pill in
---// the element colour that slides between tabs, with a short accent marker
---// under its label
-local TABBOX_RAIL_INSET = 4
-local TABBOX_RAIL_HEIGHT = 26
-local TABBOX_CHIP_INSET = 0
+--// Shared 12px card content edge, 32px rail and a recessed selected chip.
+--// The rail starts 8px below the card rim; fields begin 16px below the rail.
+local TABBOX_RAIL_INSET = 12
+local TABBOX_RAIL_HEIGHT = 32
+local TABBOX_CHIP_INSET = 3
 --// Fraction of the pill the accent marker spans, and its thickness
 local TABBOX_MARKER_WIDTH = 0.4
 local TABBOX_MARKER_HEIGHT = 2
 --// Idle, hovered and open text/icon fade for a tab in the row
-local TABBOX_TAB_IDLE_FADE = 0.55
-local TABBOX_TAB_HOVER_FADE = 0.25
+local TABBOX_TAB_IDLE_FADE = 0.10
+local TABBOX_TAB_HOVER_FADE = 0.05
 local TABBOX_TAB_FADE_TWEEN = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 --// Transparency per shadow layer, nearest the chip first
-local SUBTAB_SHADOW_TRANSPARENCY = { 0.55, 0.75 }
+local SUBTAB_SHADOW_TRANSPARENCY = { 1, 1 }
 --// Hover squashes the chip slightly; the button itself keeps its size so the row
 --// never reflows, and the underline stays put
-local SUBTAB_HOVER_SCALE = 0.94
-local SUBTAB_HOVER_TWEEN = TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 --// Left inset of a sub tab row nested in the sidebar, lining it up under the tab label
 local SUBTAB_SIDEBAR_INDENT = 30
 --// Reserved for the row's icon, kept even when it has none so labels stay aligned
@@ -3224,7 +3257,7 @@ local DROPDOWN_EXPAND_TWEEN = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.Ea
 --// FontColor; the gradient multiplies, so these are those greys as factors.
 local SWITCH_WIDTH = 38
 local SWITCH_TRACK_HEIGHT = 20
-local SWITCH_HEIGHT = 20
+local SWITCH_HEIGHT = 32
 local SWITCH_OFF_GRADIENT_FROM = Color3.fromRGB(80, 80, 80)
 local SWITCH_OFF_GRADIENT_TO = Color3.fromRGB(138, 138, 138)
 --// On keeps a gentler ramp so the track still has some depth
@@ -3234,10 +3267,10 @@ local SWITCH_BALL_TWEEN = TweenInfo.new(0.18, Enum.EasingStyle.Quart, Enum.Easin
 
 --// Slider: a recessed track with the value sat inside it, and the label above.
 --// The fill carries a soft sheen, and a slim handle rides its head.
-local SLIDER_BAR_HEIGHT = 18
+local SLIDER_BAR_HEIGHT = 28
 local SLIDER_LABEL_HEIGHT = 14
 --// Breathing room between the label and the bar below it
-local SLIDER_LABEL_GAP = 3
+local SLIDER_LABEL_GAP = 6
 --// The fill gradient multiplies over the accent and runs along the bar, so
 --// these read as factors: shaded at the root, full accent at the head
 local SLIDER_FILL_GRADIENT_FROM = Color3.fromRGB(176, 176, 176)
@@ -3269,6 +3302,46 @@ function Library:PlayTabAnimation(Tab, Showing: boolean, OnComplete: (() -> ())?
     end
 
     local TabContainer = Tab.Container :: Frame
+    if Library.PrimeMotion then
+        Library.PrimeMotion:Cancel(TabContainer)
+        Library.PrimeTransitions = Library.PrimeTransitions or setmetatable({}, {__mode="k"})
+        local state = Library.PrimeTransitions[TabContainer] or {Generation=0, ZIndex=TabContainer.ZIndex}
+        state.Generation += 1
+        Library.PrimeTransitions[TabContainer] = state
+        local generation = state.Generation
+        local reduced = Library.ReducedMotion or not (Library.Animations and Library.Animations.TabSwitch)
+        local canvas = TabContainer:IsA("CanvasGroup")
+        local function finish()
+            if not TabContainer.Parent or generation ~= state.Generation then return end
+            TabContainer.Visible=Showing
+            TabContainer.ZIndex=state.ZIndex
+            TabContainer.Position=UDim2.fromScale(0,0)
+            if canvas then TabContainer.GroupTransparency=Showing and 0 or 1 end
+            if OnComplete then OnComplete() end
+        end
+        if reduced then finish();return end
+        local offset=math.min(18, Library.TabSwipeOffset or 12)
+        local from=SwipeFrom or Library.TabSwipeFrom
+        local direction=(from=="top" or from=="left") and -1 or 1
+        local horizontal=from=="left" or from=="right"
+        local entry=horizontal and UDim2.fromOffset(offset*direction,0) or UDim2.fromOffset(0,offset*direction)
+        local leave=horizontal and UDim2.fromOffset(-6*direction,0) or UDim2.fromOffset(0,-6*direction)
+        if Showing then
+            if not TabContainer.Visible then
+                TabContainer.Position=entry
+                if canvas then TabContainer.GroupTransparency=1 end
+            end
+            TabContainer.Visible=true
+            TabContainer.ZIndex=state.ZIndex+1
+            local goals={Position=UDim2.fromScale(0,0)}
+            if canvas then goals.GroupTransparency=0 end
+            Library.PrimeMotion:To(TabContainer,goals,27,1,finish)
+        elseif canvas and TabContainer.Visible then
+            TabContainer.ZIndex=state.ZIndex
+            Library.PrimeMotion:To(TabContainer,{Position=leave,GroupTransparency=1},34,1,finish)
+        else finish() end
+        return
+    end
     local Existing = ActiveTabTweens[TabContainer]
     if Existing then
         StopTween(Existing, true)
@@ -3331,6 +3404,17 @@ function Library:PlayTabAnimation(Tab, Showing: boolean, OnComplete: (() -> ())?
             TabContainer.GroupTransparency = 1
         end
         TabContainer.Visible = true
+
+        if Library.PrimeMotion then
+            local Goals = { Position = UDim2.fromScale(0, 0) }
+            if IsCanvas then Goals.GroupTransparency = 0 end
+            Library.PrimeMotion:To(TabContainer, Goals, 25, 0.92, function()
+                if not TabContainer.Parent then return end
+                TabContainer.ZIndex = BaseZIndex
+                if OnComplete then OnComplete() end
+            end)
+            return
+        end
 
         local Tween = TweenService:Create(
             TabContainer,
@@ -3504,7 +3588,7 @@ function Library:MakeBoxPopOut(Box: any, Options: {
                 Parent = Frame,
             })
             Library:ApplyLucideIcon(PlaceholderDockIcon, PopOutIcon)
-            PlaceholderDockIcon.MouseButton1Click:Connect(function()
+            Library:OnActivate(PlaceholderDockIcon, function()
                 Box:SetPoppedOut(false)
             end)
         end
@@ -4641,6 +4725,7 @@ function Library:AddContextMenu(
 
     if List then
         Menu = New("ScrollingFrame", {
+            Name = "PrimePopup",
             AutomaticCanvasSize = Enum.AutomaticSize.None,
             AutomaticSize = List == 1 and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
             BackgroundColor3 = "BackgroundColor",
@@ -4656,6 +4741,7 @@ function Library:AddContextMenu(
         })
     else
         Menu = New("Frame", {
+            Name = "PrimePopup",
             BackgroundColor3 = "BackgroundColor",
             Size = typeof(Size) == "function" and Size() or Size,
             Visible = false,
@@ -4990,7 +5076,7 @@ end))
 --// Tooltip \\--
 local TooltipLabel = New("TextLabel", {
     BackgroundColor3 = "BackgroundColor",
-    TextSize = 14,
+    TextSize = 15,
     TextWrapped = true,
     Visible = false,
     ZIndex = 30,
@@ -5247,7 +5333,7 @@ do
         Info = Library:Validate(Info, Templates.KeyPicker)
 
         local ParentObj = self
-        local ToggleLabel = ParentObj.TextLabel
+        local ToggleLabel = ParentObj.AddonsHolder or ParentObj.TextLabel
 
         if ParentObj.Type == "Button" or ParentObj.Type == "SubButton" then
             assert(Info.Mode == "Press", "KeyPicker on Buttons can only be applied with the 'Press' mode.")
@@ -5484,13 +5570,15 @@ do
         end
 
         local Picker = New("TextButton", {
+            Name = "PrimeKeyTarget",
             BackgroundColor3 = "MainColor",
             Size = UDim2.fromOffset(18, 18),
             Text = (IsForButton and SlideOverflow) and "" or KeyPicker.Value,
-            TextSize = 14,
-            TextTransparency = 0.4,
+            TextSize = 15,
+            TextTransparency = 0.15,
             Parent = ToggleLabel,
         })
+        if ParentObj.AddonsHolder then New("UISizeConstraint",{MinSize=Vector2.new(28,28),Parent=Picker}) end
 
         if IsForButton and SlideOverflow then
             Picker.ClipsDescendants = true
@@ -5500,7 +5588,7 @@ do
                 Size = UDim2.new(1, 0, 1, 0),
                 Position = UDim2.new(0, 0, 0, 0),
                 Text = KeyPicker.Value,
-                TextSize = 14,
+                TextSize = 15,
                 FontFace = Picker.FontFace,
                 TextXAlignment = Enum.TextXAlignment.Center,
                 Parent = Picker,
@@ -5606,8 +5694,8 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.fromScale(0, 1),
                 Text = "",
-                TextSize = 14,
-                TextTransparency = 0.5,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 Parent = Holder,
             })
 
@@ -5643,7 +5731,7 @@ do
             end
 
             function KeybindsToggle:Display(State)
-                Label.TextTransparency = State and 0 or 0.5
+                Label.TextTransparency = State and 0 or 0.15
                 CheckImage.ImageTransparency = State and 0 or 1
             end
 
@@ -5664,7 +5752,7 @@ do
             end
 
             KeyPicker.DoClick = function(...) end --// make luau lsp shut up
-            table.insert(KeyPicker.Connections, Holder.MouseButton1Click:Connect(function()
+            table.insert(KeyPicker.Connections, Library:OnActivate(Holder, function()
                 if KeybindsToggle.Normal then
                     return
                 end
@@ -5743,8 +5831,8 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, IsForButton and 21 or (TotalModeButtons == 1 and 18 or 19)),
                 Text = Mode,
-                TextSize = 14,
-                TextTransparency = 0.5,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 Parent = MenuTable.Menu,
             })
 
@@ -5800,10 +5888,10 @@ do
                 KeyPicker.Mode = nil
 
                 Button.BackgroundTransparency = 1
-                Button.TextTransparency = 0.5
+                Button.TextTransparency = 0.15
             end
 
-            table.insert(KeyPicker.Connections, Button.MouseButton1Click:Connect(function()
+            table.insert(KeyPicker.Connections, Library:OnActivate(Button, function()
                 ModeButton:Select()
             end))
 
@@ -5825,7 +5913,7 @@ do
 
                 TweenService:Create(Button, Library.TweenInfo, {
                     BackgroundTransparency = 1,
-                    TextTransparency = 0.5,
+                    TextTransparency = 0.15,
                 }):Play()
             end))
 
@@ -6143,7 +6231,7 @@ do
             KeyPicker:Update()
         end
 
-        table.insert(KeyPicker.Connections, Picker.MouseButton1Click:Connect(function()
+        table.insert(KeyPicker.Connections, Library:OnActivate(Picker, function()
             if Picking or Library.IsPicking or ParentObj.Disabled then
                 return
             end
@@ -6447,7 +6535,7 @@ do
         Info = Library:Validate(Info, Templates.ColorPicker)
 
         local ParentObj = self
-        local ToggleLabel = ParentObj.TextLabel
+        local ToggleLabel = ParentObj.AddonsHolder or ParentObj.TextLabel
 
         local ColorPicker = {
             Connections = {},
@@ -6471,6 +6559,7 @@ do
             Text = "",
             Parent = ToggleLabel,
         })
+        if ParentObj.AddonsHolder then New("UISizeConstraint",{MinSize=Vector2.new(28,28),Parent=Holder}) end
 
         local HolderStroke = New("UIStroke", {
             Color = Library:GetDarkerColor(ColorPicker.Value),
@@ -6603,8 +6692,8 @@ do
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 1),
             Text = "",
-            TextSize = 14,
-            TextTransparency = 0.5,
+            TextSize = 15,
+            TextTransparency = 0.15,
             TextTruncate = Enum.TextTruncate.AtEnd,
             TextXAlignment = Enum.TextXAlignment.Center,
             Parent = FooterBar,
@@ -6626,7 +6715,7 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, 8),
                 Text = ColorPicker.Title,
-                TextSize = 14,
+                TextSize = 15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = ContentHolder,
             })
@@ -6857,7 +6946,7 @@ do
             ClearTextOnFocus = false,
             Size = UDim2.fromScale(1, 1),
             Text = "#??????",
-            TextSize = 14,
+            TextSize = 15,
             Parent = InfoHolder,
         })
 
@@ -6879,7 +6968,7 @@ do
             ClearTextOnFocus = false,
             Size = UDim2.fromScale(1, 1),
             Text = "?, ?, ?",
-            TextSize = 14,
+            TextSize = 15,
             Parent = InfoHolder,
         })
 
@@ -6926,11 +7015,11 @@ do
                     BackgroundTransparency = 1,
                     Size = UDim2.new(1, 0, 0, 21),
                     Text = Text,
-                    TextSize = 14,
+                    TextSize = 15,
                     Parent = ContextMenu.Menu,
                 })
 
-                table.insert(ColorPicker.Connections, Button.MouseButton1Click:Connect(function()
+                table.insert(ColorPicker.Connections, Library:OnActivate(Button, function()
                     Library:SafeCallback(Func)
                     ContextMenu:Close()
                 end))
@@ -6993,7 +7082,7 @@ do
             BackgroundColor3 = "MainColor",
             Size = UDim2.fromScale(1, 1),
             Text = "Copy color",
-            TextSize = 14,
+            TextSize = 15,
             Parent = ActionHolder,
         })
         New("UIStroke", {
@@ -7012,7 +7101,7 @@ do
             BackgroundColor3 = "MainColor",
             Size = UDim2.fromScale(1, 1),
             Text = "Paste color",
-            TextSize = 14,
+            TextSize = 15,
             Parent = ActionHolder,
         })
         New("UIStroke", {
@@ -7056,7 +7145,7 @@ do
             }):Play()
         end))
 
-        table.insert(ColorPicker.Connections, CopyColorButton.MouseButton1Click:Connect(function()
+        table.insert(ColorPicker.Connections, Library:OnActivate(CopyColorButton, function()
             Library.CopiedColor = { ColorPicker.Value, ColorPicker.Transparency }
 
             CopyColorResetId += 1
@@ -7072,7 +7161,7 @@ do
             end)
         end))
 
-        table.insert(ColorPicker.Connections, PasteColorButton.MouseButton1Click:Connect(function()
+        table.insert(ColorPicker.Connections, Library:OnActivate(PasteColorButton, function()
             PasteColorResetId += 1
             local ThisResetId = PasteColorResetId
 
@@ -7190,7 +7279,7 @@ do
             ColorPicker:Update()
         end
 
-        table.insert(ColorPicker.Connections, Holder.MouseButton1Click:Connect(function()
+        table.insert(ColorPicker.Connections, Library:OnActivate(Holder, function()
             if ParentObj.Disabled then
                 return
             end
@@ -7703,6 +7792,7 @@ local function CreatePlayerCard(Info, Parent: Instance, IsCompact: boolean, Inse
         })
 
         TitleLabel = New("TextLabel", {
+            Name = "PrimeTitle",
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 18),
             TextSize = 15,
@@ -7866,8 +7956,8 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.fromScale(1, 0),
                 Text = Text,
-                TextSize = 14,
-                TextTransparency = 0.5,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 TextXAlignment = Enum.TextXAlignment.Center,
                 Parent = InnerHolder,
             })
@@ -7877,30 +7967,33 @@ do
 
             New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = "MainColor",
+                Name = "PrimeHairline",
+                BackgroundColor3 = "FontColor",
                 BorderColor3 = "OutlineColor",
-                BorderSizePixel = 1,
+                BorderSizePixel = 0,
                 Position = UDim2.fromScale(0, 0.5),
-                Size = UDim2.new(0.5, -SizeX, 0, 2),
+                Size = UDim2.new(0.5, -SizeX, 0, 1),
                 Parent = InnerHolder,
             })
             New("Frame", {
                 AnchorPoint = Vector2.new(1, 0.5),
-                BackgroundColor3 = "MainColor",
+                Name = "PrimeHairline",
+                BackgroundColor3 = "FontColor",
                 BorderColor3 = "OutlineColor",
-                BorderSizePixel = 1,
+                BorderSizePixel = 0,
                 Position = UDim2.fromScale(1, 0.5),
-                Size = UDim2.new(0.5, -SizeX, 0, 2),
+                Size = UDim2.new(0.5, -SizeX, 0, 1),
                 Parent = InnerHolder,
             })
         else
             New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = "MainColor",
+                Name = "PrimeHairline",
+                BackgroundColor3 = "FontColor",
                 BorderColor3 = "OutlineColor",
-                BorderSizePixel = 1,
+                BorderSizePixel = 0,
                 Position = UDim2.fromScale(0, 0.5),
-                Size = UDim2.new(1, 0, 0, 2),
+                Size = UDim2.new(1, 0, 0, 1),
                 Parent = InnerHolder,
             })
         end
@@ -8273,7 +8366,7 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, -8, 1, 0),
                 Text = Item.Text or "",
-                TextSize = 14,
+                TextSize = 15,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = RowHolder,
@@ -8290,7 +8383,7 @@ do
                 Position = UDim2.new(1, 0, 0.5, 0),
                 Size = UDim2.new(0, 0, 1, 0),
                 Text = "",
-                TextSize = 14,
+                TextSize = 15,
                 TextXAlignment = Enum.TextXAlignment.Right,
                 Parent = RowHolder,
             })
@@ -8339,7 +8432,7 @@ do
                 }):Play()
             end))
 
-            table.insert(StatusLabel.RowConnections, Status.MouseButton1Click:Connect(function()
+            table.insert(StatusLabel.RowConnections, Library:OnActivate(Status, function()
                 if not Status.Active then
                     return
                 end
@@ -8638,7 +8731,7 @@ do
                 Size = UDim2.new(1, 0, 0, 12),
                 Text = "",
                 TextSize = 12,
-                TextTransparency = 0.5,
+                TextTransparency = 0.15,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Frame,
@@ -8857,7 +8950,7 @@ do
 
         local Holder = New("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1, 0, 0, 32),
             Parent = Container,
         })
 
@@ -8873,13 +8966,16 @@ do
                 Active = not Button.Disabled,
                 BackgroundColor3 = Button.Disabled and "BackgroundColor" or "MainColor",
                 Size = UDim2.fromScale(1, 1),
+                Name="PrimeActionButton",
+                TextTruncate=Enum.TextTruncate.AtEnd,TextWrapped=false,
                 Text = Button.Text,
-                TextSize = 14,
-                TextTransparency = 0.4,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 Visible = Button.Visible,
                 Parent = Holder,
             })
 
+            New("UIPadding",{PaddingLeft=UDim.new(0,10),PaddingRight=UDim.new(0,10),Parent=Base})
             local Stroke = New("UIStroke", {
                 Color = "OutlineColor",
                 Transparency = Button.Disabled and 0.5 or 0,
@@ -8915,12 +9011,12 @@ do
                 end
 
                 Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
-                    TextTransparency = 0.4,
+                    TextTransparency = 0.15,
                 })
                 Button.Tween:Play()
             end))
 
-            table.insert(Button.Connections, Button.Base.MouseButton1Click:Connect(function()
+            table.insert(Button.Connections, Library:OnActivate(Button.Base, function()
                 if Button.Disabled or Button.Locked then
                     return
                 end
@@ -8990,7 +9086,7 @@ do
 
                 SubButton.Base.BackgroundColor3 = SubButton.Disabled and Library.Scheme.BackgroundColor
                     or Library.Scheme.MainColor
-                SubButton.Base.TextTransparency = SubButton.Disabled and 0.8 or 0.4
+                SubButton.Base.TextTransparency = SubButton.Disabled and 0.8 or 0.05
                 SubButton.Stroke.Transparency = SubButton.Disabled and 0.5 or 0
 
                 Library.Registry[SubButton.Base].BackgroundColor3 = SubButton.Disabled and "BackgroundColor"
@@ -9086,7 +9182,7 @@ do
 
             Button.Base.BackgroundColor3 = Button.Disabled and Library.Scheme.BackgroundColor
                 or Library.Scheme.MainColor
-            Button.Base.TextTransparency = Button.Disabled and 0.8 or 0.4
+            Button.Base.TextTransparency = Button.Disabled and 0.8 or 0.05
             Button.Stroke.Transparency = Button.Disabled and 0.5 or 0
 
             Library.Registry[Button.Base].BackgroundColor3 = Button.Disabled and "BackgroundColor" or "MainColor"
@@ -9224,7 +9320,7 @@ do
         local Button = New("TextButton", {
             Active = not Toggle.Disabled,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 18),
+            Size = UDim2.new(1, 0, 0, 32),
             Text = "",
             Visible = Toggle.Visible,
             Parent = Container,
@@ -9232,21 +9328,31 @@ do
 
         local Label = New("TextLabel", {
             BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(26, 0),
-            Size = UDim2.new(1, -26, 1, 0),
+            Position = UDim2.fromOffset(40, 0),
+            Size = UDim2.new(1, -40, 1, 0),
+            Name = "PrimeLabel",
+            TextTruncate = Enum.TextTruncate.AtEnd,
             Text = Toggle.Text,
-            TextSize = 14,
-            TextTransparency = 0.4,
+            TextSize = 15,
+            TextTransparency = 0.15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Button,
         })
 
-        New("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Right,
-            Padding = UDim.new(0, 6),
-            Parent = Label,
+        local AddonsHolder = New("Frame", {
+            Name="PrimeAddonRail",BackgroundTransparency=1,AutomaticSize=Enum.AutomaticSize.X,
+            AnchorPoint=Vector2.new(1,.5),Position=UDim2.new(1,-0,.5,0),
+            Size=UDim2.new(0,0,1,0),Parent=Button,
         })
+        local AddonsLayout = New("UIListLayout", {
+            FillDirection=Enum.FillDirection.Horizontal,HorizontalAlignment=Enum.HorizontalAlignment.Right,
+            VerticalAlignment=Enum.VerticalAlignment.Center,Padding=UDim.new(0,6),Parent=AddonsHolder,
+        })
+        Toggle.AddonsHolder=AddonsHolder
+        table.insert(Toggle.Connections,AddonsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            local width=AddonsLayout.AbsoluteContentSize.X/Library.DPIScale
+            Label.Size=UDim2.new(1,-40-width-(width>0 and 6 or 0),1,0)
+        end))
 
         local Checkbox = New("Frame", {
             BackgroundColor3 = "MainColor",
@@ -9300,7 +9406,7 @@ do
             end
 
             TweenService:Create(Label, Library.TweenInfo, {
-                TextTransparency = Toggle.Value and 0 or 0.4,
+                TextTransparency = Toggle.Value and 0 or 0.1,
             }):Play()
             TweenService:Create(CheckImage, Library.TweenInfo, {
                 ImageTransparency = Toggle.Value and 0 or 1,
@@ -9370,7 +9476,7 @@ do
             Label.Text = Text
         end
 
-        table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
+        table.insert(Toggle.Connections, Library:OnActivate(Button, function()
             if Toggle.Disabled then
                 return
             end
@@ -9491,24 +9597,35 @@ do
         local Label = New("TextLabel", {
             BackgroundTransparency = 1,
             Size = UDim2.new(1, -(SWITCH_WIDTH + 10), 1, 0),
+            Name = "PrimeLabel",
+            TextTruncate = Enum.TextTruncate.AtEnd,
             Text = Toggle.Text,
-            TextSize = 14,
-            TextTransparency = 0.4,
+            TextSize = 15,
+            TextTransparency = 0.15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Button,
         })
 
-        New("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Right,
-            Padding = UDim.new(0, 6),
-            Parent = Label,
+        local AddonsHolder = New("Frame", {
+            Name="PrimeAddonRail",BackgroundTransparency=1,AutomaticSize=Enum.AutomaticSize.X,
+            AnchorPoint=Vector2.new(1,.5),Position=UDim2.new(1,-48,.5,0),
+            Size=UDim2.new(0,0,1,0),Parent=Button,
         })
+        local AddonsLayout = New("UIListLayout", {
+            FillDirection=Enum.FillDirection.Horizontal,HorizontalAlignment=Enum.HorizontalAlignment.Right,
+            VerticalAlignment=Enum.VerticalAlignment.Center,Padding=UDim.new(0,6),Parent=AddonsHolder,
+        })
+        Toggle.AddonsHolder=AddonsHolder
+        table.insert(Toggle.Connections,AddonsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            local width=AddonsLayout.AbsoluteContentSize.X/Library.DPIScale
+            Label.Size=UDim2.new(1,-48-width-(width>0 and 6 or 0),1,0)
+        end))
 
         --// Track/knob are pills at any radius, but go square when the radius is 0
         local SwitchPillRadius = Library.CornerRadius > 0 and UDim.new(1, 0) or UDim.new(0, 0)
 
         local Switch = New("Frame", {
+            Name = "PrimeSwitch",
             AnchorPoint = Vector2.new(1, 0.5),
             BackgroundColor3 = "FontColor",
             Position = UDim2.new(1, 0, 0.5, 0),
@@ -9522,13 +9639,7 @@ do
                 Parent = Switch,
             })
         )
-        New("UIPadding", {
-            PaddingBottom = UDim.new(0, 2),
-            PaddingLeft = UDim.new(0, 2),
-            PaddingRight = UDim.new(0, 2),
-            PaddingTop = UDim.new(0, 2),
-            Parent = Switch,
-        })
+
         local SwitchStroke = New("UIStroke", {
             Color = "OutlineColor",
             Transparency = 1,
@@ -9545,8 +9656,10 @@ do
 
         --// Sits under the ball, so it has to be a sibling rather than a child
         local BallHolder = New("Frame", {
+            Name = "PrimeSwitchInset",
             BackgroundTransparency = 1,
-            Size = UDim2.fromScale(1, 1),
+            Position = UDim2.fromOffset(2, 2),
+            Size = UDim2.new(1, -4, 1, -4),
             Parent = Switch,
         })
 
@@ -9569,6 +9682,7 @@ do
         )
 
         local Ball = New("Frame", {
+            Name = "PrimeSwitchThumb",
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundColor3 = "FontColor",
             Position = UDim2.fromScale(0, 0.5),
@@ -9613,8 +9727,8 @@ do
                 and ColorSequence.new(SWITCH_ON_GRADIENT_FROM, SWITCH_ON_GRADIENT_TO)
                 or ColorSequence.new(SWITCH_OFF_GRADIENT_FROM, SWITCH_OFF_GRADIENT_TO)
 
-            Ball.BackgroundColor3 = Library.Scheme.FontColor
-            Library.Registry[Ball].BackgroundColor3 = "FontColor"
+            Ball.BackgroundColor3 = Toggle.Value and Library.Scheme.BackgroundColor or Library.Scheme.FontColor
+            Library.Registry[Ball].BackgroundColor3 = Toggle.Value and "BackgroundColor" or "FontColor"
 
             BallShadow.BackgroundTransparency = Toggle.Disabled and 1 or 0.6
 
@@ -9632,14 +9746,18 @@ do
             end
 
             TweenService:Create(Label, Library.TweenInfo, {
-                TextTransparency = Toggle.Value and 0 or 0.4,
+                TextTransparency = Toggle.Value and 0 or 0.1,
             }):Play()
-            TweenService:Create(Ball, SWITCH_BALL_TWEEN, {
-                Position = Offset,
-            }):Play()
-            TweenService:Create(BallShadow, SWITCH_BALL_TWEEN, {
-                Position = Offset + UDim2.fromOffset(0, 1),
-            }):Play()
+            if Library.ReducedMotion then
+                Ball.Position = Offset
+                BallShadow.Position = Offset + UDim2.fromOffset(0, 1)
+            elseif Library.PrimeMotion then
+                Library.PrimeMotion:To(Ball, { Position = Offset }, 32, 0.75)
+                Library.PrimeMotion:To(BallShadow, { Position = Offset + UDim2.fromOffset(0, 1) }, 32, 0.75)
+            else
+                TweenService:Create(Ball, SWITCH_BALL_TWEEN, { Position = Offset }):Play()
+                TweenService:Create(BallShadow, SWITCH_BALL_TWEEN, { Position = Offset + UDim2.fromOffset(0, 1) }):Play()
+            end
         end
 
         function Toggle:OnChanged(Func)
@@ -9702,7 +9820,7 @@ do
             Label.Text = Text
         end
 
-        table.insert(Toggle.Connections, Button.MouseButton1Click:Connect(function()
+        table.insert(Toggle.Connections, Library:OnActivate(Button, function()
             if Toggle.Disabled then
                 return
             end
@@ -9814,8 +9932,9 @@ do
         }
 
         local Holder = New("Frame", {
+            Name = "PrimeSettingRow",
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 39),
+            Size = UDim2.new(1, 0, 0, 54),
             Visible = Input.Visible,
             Parent = Container,
         })
@@ -9823,8 +9942,10 @@ do
         local Label = New("TextLabel", {
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 14),
+            Name = "PrimeLabel",
+            TextTruncate = Enum.TextTruncate.AtEnd,
             Text = Input.Text,
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Holder,
         })
@@ -9835,10 +9956,11 @@ do
             ClearTextOnFocus = not Input.Disabled and Input.ClearTextOnFocus,
             PlaceholderText = Input.Placeholder,
             Position = UDim2.fromScale(0, 1),
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1, 0, 0, 32),
             Text = Input.Value,
             TextEditable = not Input.Disabled,
-            TextScaled = true,
+            TextScaled = false,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Holder,
         })
@@ -9847,7 +9969,7 @@ do
             PaddingBottom = UDim.new(0, 3),
             PaddingLeft = UDim.new(0, 8),
             PaddingRight = UDim.new(0, 8),
-            PaddingTop = UDim.new(0, 4),
+            PaddingTop = UDim.new(0, 3),
             Parent = Box,
         })
 
@@ -10072,12 +10194,13 @@ do
         }
 
         local Holder = New("Frame", {
+            Name = "PrimeSettingRow",
             BackgroundTransparency = 1,
             Size = UDim2.new(
                 1,
                 0,
                 0,
-                Info.Compact and SLIDER_BAR_HEIGHT or (SLIDER_LABEL_HEIGHT + SLIDER_LABEL_GAP + SLIDER_BAR_HEIGHT)
+                Info.Compact and (SLIDER_BAR_HEIGHT + 18 + SLIDER_LABEL_GAP) or (SLIDER_LABEL_HEIGHT + SLIDER_LABEL_GAP + SLIDER_BAR_HEIGHT)
             ),
             Visible = Slider.Visible,
             Parent = Container,
@@ -10087,10 +10210,11 @@ do
         local SliderLabel
         if not Info.Compact then
             SliderLabel = New("TextLabel", {
+                Name = "PrimeLabel",
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, SLIDER_LABEL_HEIGHT),
                 Text = Slider.Text,
-                TextSize = 14,
+                TextSize = 15,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Holder,
@@ -10102,7 +10226,8 @@ do
             AnchorPoint = Vector2.new(0, 1),
             --// Sunk below the groupbox surface, so the fill reads as light in a channel
             BackgroundColor3 = "BackgroundColor",
-            ClipsDescendants = true,
+            ClipsDescendants = false,
+            BackgroundTransparency = 1,
             Position = UDim2.fromScale(0, 1),
             Size = UDim2.new(1, 0, 0, SLIDER_BAR_HEIGHT),
             Text = "",
@@ -10111,36 +10236,33 @@ do
 
         local BarStroke = New("UIStroke", {
             Color = "OutlineColor",
+            Transparency = 1,
             Parent = Bar,
         })
 
-        --// The value always reads from inside the bar, centred over the fill
         local DisplayLabel = New("TextLabel", {
+            Name = "PrimeValue",
             BackgroundTransparency = 1,
-            Size = UDim2.fromScale(1, 1),
-            Text = "",
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Center,
-            ZIndex = Bar.ZIndex + 3,
-            Parent = Bar,
+            AnchorPoint = Vector2.new(1, 0),
+            Position = UDim2.fromScale(1, 0),
+            Size = UDim2.new(Info.Compact and 1 or 0.48, 0, 0, 18),
+            Text = "", TextSize = 15, TextColor3 = "FontColor",
+            TextXAlignment = Info.Compact and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right,
+            Parent = Holder,
         })
-        New("UIStroke", {
-            ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-            Color = "DarkColor",
-            LineJoinMode = Enum.LineJoinMode.Miter,
-            Parent = DisplayLabel,
-        })
+        if SliderLabel then SliderLabel.Size = UDim2.new(0.5, 0, 0, SLIDER_LABEL_HEIGHT) end
 
         local InputTextBox
         local InputTextBoxStroke
         if Info.AllowRightClickInput then
             InputTextBox = New("TextBox", {
                 AnchorPoint = DisplayLabel.AnchorPoint,
-                BackgroundTransparency = 1,
+                BackgroundTransparency = 0,
+                BackgroundColor3 = "BackgroundColor",
                 Position = DisplayLabel.Position,
-                Size = DisplayLabel.Size,
+                Size = UDim2.new(0.5, 0, 0, 24),
                 Text = "",
-                TextSize = 14,
+                TextSize = 15,
                 TextXAlignment = DisplayLabel.TextXAlignment,
                 ZIndex = Bar.ZIndex + 4,
                 Visible = false,
@@ -10155,11 +10277,18 @@ do
             })
         end
 
+        local Track = New("Frame", {
+            Name = "PrimeSliderTrack",
+            BackgroundColor3 = "FontColor", BackgroundTransparency = 0.25,
+            AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.fromScale(0, 0.5),
+            Size = UDim2.new(1, 0, 0, 4), Parent = Bar,
+        })
+        New("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Track })
         local Fill = New("Frame", {
             BackgroundColor3 = "AccentColor",
             Size = UDim2.fromScale(0.5, 1),
             ZIndex = Bar.ZIndex + 1,
-            Parent = Bar,
+            Parent = Track,
         })
 
         --// The fill runs from a shaded root to full accent at the head; the
@@ -10186,6 +10315,14 @@ do
             })
         )
 
+        local Knob = New("Frame", {
+            Name = "PrimeSliderThumb",
+            BackgroundColor3 = "AccentColor", AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(14, 14),
+            ZIndex = Bar.ZIndex + 2, Parent = Bar,
+        })
+        New("UICorner", { CornerRadius = UDim.new(1, 0), Parent = Knob })
+        New("UIStroke", { Color = "FontColor", Transparency = 0.55, Parent = Knob })
         function Slider:UpdateColors()
             if Library.Unloaded then
                 return
@@ -10207,7 +10344,10 @@ do
             local Warm = Slider.Hovered and not Slider.Disabled
             BarStroke.Color = Warm and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
             Library.Registry[BarStroke].Color = Warm and "AccentColor" or "OutlineColor"
-            BarStroke.Transparency = Warm and 0.4 or 0
+            BarStroke.Transparency = 1
+            Knob.BackgroundTransparency = Slider.Disabled and 0.6 or 0
+            local KnobSize = UDim2.fromOffset(14, 14)
+            if Library.PrimeMotion then Library.PrimeMotion:To(Knob, { Size = KnobSize }, 30, 0.7) else Knob.Size = KnobSize end
         end
 
         function Slider:Display()
@@ -10246,9 +10386,15 @@ do
 
             local FillSize = UDim2.fromScale(X, 1)
 
-            if Slider.Dragging then
+            local KnobPosition = UDim2.fromScale(X, 0.5)
+            if Slider.Dragging or Library.ReducedMotion then
+                Knob.Position = KnobPosition
                 Fill.Size = FillSize
+            elseif Library.PrimeMotion then
+                Library.PrimeMotion:To(Fill, { Size = FillSize }, 30, 0.95)
+                Library.PrimeMotion:To(Knob, { Position = KnobPosition }, 30, 0.95)
             else
+                Knob.Position = KnobPosition
                 TweenService:Create(Fill, SLIDER_FILL_TWEEN, { Size = FillSize }):Play()
             end
         end
@@ -10402,6 +10548,17 @@ do
                     Color = Library.Scheme.DarkColor,
                 }):Play()
             end))
+        end
+
+        -- Keyboard activation opens exact numeric entry without a drag gesture.
+        if InputTextBox then
+            Library.ActivationHandlers[Bar] = function()
+                if Slider.Disabled or Slider.Destroyed then return end
+                InputTextBox.Text = tostring(Slider.Value)
+                InputTextBox.Visible = true
+                DisplayLabel.Visible = false
+                InputTextBox:CaptureFocus()
+            end
         end
 
         local LastTap = 0
@@ -10583,8 +10740,9 @@ do
         }
 
         local Holder = New("Frame", {
+            Name = "PrimeSettingRow",
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, Dropdown.Text and 39 or 21),
+            Size = UDim2.new(1, 0, 0, Dropdown.Text and 54 or 32),
             Visible = Dropdown.Visible,
             Parent = Container,
         })
@@ -10592,8 +10750,10 @@ do
         local Label = New("TextLabel", {
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 14),
+            Name = "PrimeLabel",
+            TextTruncate = Enum.TextTruncate.AtEnd,
             Text = Dropdown.Text,
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not not Info.Text,
             ZIndex = 3,
@@ -10601,10 +10761,11 @@ do
         })
 
         local DisplayContainer = New("TextButton", {
+            Name = "PrimeDropdownControl",
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
             Position = UDim2.fromScale(0, 1),
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1, 0, 0, 32),
             Text = "",
             TextTransparency = 1,
             ZIndex = 2,
@@ -10613,7 +10774,7 @@ do
 
         New("UIPadding", {
             PaddingLeft = UDim.new(0, 8),
-            PaddingRight = UDim.new(0, 4),
+            PaddingRight = UDim.new(0, 8),
             Parent = DisplayContainer,
         })
 
@@ -10632,7 +10793,7 @@ do
 
         local DisplayImage = New("ImageLabel", {
             BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(-4, 3),
+            AnchorPoint=Vector2.new(0,.5),Position = UDim2.fromScale(0,.5),
             Size = UDim2.fromOffset(16, 16),
             Image = "",
             ImageTransparency = 1,
@@ -10641,17 +10802,21 @@ do
         })
 
         local DisplayButton = New("TextButton", {
+            Name = "PrimeValue",
+            AnchorPoint=Vector2.new(0,.5),Position=UDim2.fromScale(0,.5),
+            TextYAlignment=Enum.TextYAlignment.Center,
             Active = not Dropdown.Disabled,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1,Info.Expandable~=false and -52 or -24,1,0),
             Text = "---",
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 2,
             Parent = DisplayContainer,
         })
 
         local ArrowImage = New("ImageLabel", {
+            Name = "PrimeDropdownChevron",
             AnchorPoint = Vector2.new(1, 0.5),
             ImageColor3 = "FontColor",
             ImageTransparency = 0.5,
@@ -10660,7 +10825,7 @@ do
             Parent = DisplayContainer,
         })
         if ArrowIcon then
-            Library:ApplyLucideIcon(ArrowImage, ArrowIcon)
+            Library:ApplyLucideIcon(ArrowImage, ArrowIcon, 180)
         end
 
         --// Opens every value in a panel over the window
@@ -10672,20 +10837,22 @@ do
             ExpandButton = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 BackgroundTransparency = 1,
-                Position = UDim2.new(1, -18, 0.5, 0),
-                Size = UDim2.fromOffset(16, 16),
+                Position = UDim2.new(1, -20, 0.5, 0),
+                Size = UDim2.fromOffset(28, 28),
                 Text = "",
                 ZIndex = 3,
                 Parent = DisplayContainer,
             })
             ExpandIconImage = New("ImageLabel", {
+                Name="PrimeExpandGlyph",
+                AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),
                 Image = ExpandIcon and ExpandIcon.Url or "",
                 ImageColor3 = "FontColor",
                 ImageRectOffset = ExpandIcon and ExpandIcon.ImageRectOffset or Vector2.zero,
                 ImageRectSize = ExpandIcon and ExpandIcon.ImageRectSize or Vector2.zero,
                 ImageTransparency = 0.5,
                 ScaleType = Enum.ScaleType.Fit,
-                Size = UDim2.fromScale(1, 1),
+                Size = UDim2.fromOffset(14,14),
                 ZIndex = 3,
                 Parent = ExpandButton,
             })
@@ -10713,15 +10880,15 @@ do
             SearchBox = New("TextBox", {
                 BackgroundTransparency = 1,
                 PlaceholderText = "Search...",
-                Position = UDim2.fromOffset(-8, 0),
-                Size = UDim2.new(1, ExpandButton and -34 or -12, 1, 0),
-                TextSize = 14,
+                Position = UDim2.fromOffset(0, 0),
+                Size = UDim2.fromScale(1,1),
+                TextSize = 15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = false,
                 Parent = DisplayButton,
             })
             New("UIPadding", {
-                PaddingLeft = UDim.new(0, 8),
+                PaddingLeft = UDim.new(0, 0),
                 Parent = SearchBox,
             })
 
@@ -10785,7 +10952,13 @@ do
                 DisplayButton.TextTransparency = (Active and SearchBox) and 1 or 0
 
                 ArrowImage.ImageTransparency = Active and 0 or 0.5
-                ArrowImage.Rotation = Active and 180 or 0
+                if Library.PrimeMotion then
+                    Library.PrimeMotion:To(ArrowImage,{Rotation=Active and 0 or 180},30,1)
+                elseif Library.ReducedMotion then
+                    ArrowImage.Rotation=Active and 0 or 180
+                else
+                    TweenService:Create(ArrowImage,Library.TweenInfo,{Rotation=Active and 0 or 180}):Play()
+                end
 
                 if SearchBox then
                     SearchBox.Text = ""
@@ -10987,9 +11160,6 @@ do
                 end
             end
 
-            if #Str > 25 then
-                Str = Str:sub(1, 22) .. "..."
-            end
 
             DisplayButton.Text = (Str == "" and "---" or Str)
 
@@ -11001,8 +11171,8 @@ do
                 DisplayImage.ImageTransparency = 1
             end
 
-            DisplayButton.Size = ValueImage and UDim2.new(1, -8, 0, 21) or UDim2.new(1, 0, 0, 21)
-            DisplayButton.Position = ValueImage and UDim2.fromOffset(14, 0) or UDim2.fromOffset(0, 0)
+            DisplayButton.Size = UDim2.new(1,-(ExpandButton and 52 or 24)-(ValueImage and 22 or 0),1,0)
+            DisplayButton.Position = UDim2.new(0,ValueImage and 22 or 0,.5,0)
         end
 
         function Dropdown:OnChanged(Func)
@@ -11302,8 +11472,8 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, ItemHeight),
                 Text = "",
-                TextSize = 14,
-                TextTransparency = 0.5,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Container,
             })
@@ -11334,14 +11504,14 @@ do
                 Row.Selected = Selected and true or false
 
                 Container.BackgroundTransparency = Selected and 0 or 1
-                Button.TextTransparency = Entry.IsDisabled and 0.8 or Selected and 0 or 0.5
+                Button.TextTransparency = Entry.IsDisabled and 0.8 or Selected and 0 or 0.15
 
                 if Entry.ValueImage then
                     Image.ImageTransparency = Entry.IsDisabled and 0.8 or Selected and 0 or 0.5
                 end
             end
 
-            table.insert(Dropdown.Connections, Button.MouseButton1Click:Connect(function()
+            table.insert(Dropdown.Connections, Library:OnActivate(Button, function()
                 local Entry = Row.Entry
                 if not Entry or Entry.IsDisabled or DragSelecting then
                     return
@@ -11413,7 +11583,7 @@ do
                     BackgroundTransparency = 1,
                 }):Play()
                 TweenService:Create(Button, Library.TweenInfo, {
-                    TextTransparency = 0.5,
+                    TextTransparency = 0.15,
                 }):Play()
 
                 if Image then
@@ -11519,8 +11689,8 @@ do
                     Position = UDim2.fromScale(Offset, 0),
                     Size = UDim2.new(0.5, 0, 1, 0),
                     Text = Text,
-                    TextSize = 14,
-                    TextTransparency = 0.5,
+                    TextSize = 15,
+                    TextTransparency = 0.15,
                     Parent = SelectAllRow,
                 })
 
@@ -11528,9 +11698,9 @@ do
                     TweenService:Create(Button, Library.TweenInfo, { TextTransparency = 0 }):Play()
                 end)
                 Button.MouseLeave:Connect(function()
-                    TweenService:Create(Button, Library.TweenInfo, { TextTransparency = 0.5 }):Play()
+                    TweenService:Create(Button, Library.TweenInfo, { TextTransparency = 0.15 }):Play()
                 end)
-                Button.MouseButton1Click:Connect(function()
+                Library:OnActivate(Button, function()
                     ApplyBulkSelection(State, SearchBox and SearchBox.Text:lower() or nil)
                 end)
             end
@@ -11725,7 +11895,7 @@ do
 
         function Dropdown:SetText(Text: string)
             Dropdown.Text = Text
-            Holder.Size = UDim2.new(1, 0, 0, Text and 39 or 21)
+            Holder.Size = UDim2.new(1, 0, 0, Text and 54 or 32)
 
             Label.Text = Text and Text or ""
             Label.Visible = not not Text
@@ -11866,7 +12036,7 @@ do
             CloseButton.MouseLeave:Connect(function()
                 TweenService:Create(CloseButton, Library.TweenInfo, { BackgroundTransparency = 1 }):Play()
             end)
-            CloseButton.MouseButton1Click:Connect(function()
+            Library:OnActivate(CloseButton, function()
                 Dropdown:Collapse()
             end)
 
@@ -11881,7 +12051,7 @@ do
                     Position = UDim2.fromOffset(10, 42),
                     Size = UDim2.new(1, -20, 0, 26),
                     Text = "",
-                    TextSize = 14,
+                    TextSize = 15,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = ExpandFrame,
                 })
@@ -11953,14 +12123,14 @@ do
                 Position = UDim2.fromOffset(0, ListTop + 14),
                 Size = UDim2.new(1, 0, 0, 16),
                 Text = "No matching values",
-                TextSize = 14,
-                TextTransparency = 0.5,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 Visible = false,
                 Parent = ExpandFrame,
             })
 
             --// Clicking anywhere off the panel dismisses it
-            ExpandOverlay.MouseButton1Click:Connect(function()
+            Library:OnActivate(ExpandOverlay, function()
                 Dropdown:Collapse()
             end)
         end
@@ -12006,8 +12176,8 @@ do
                         BackgroundTransparency = 1,
                         Size = UDim2.fromScale(1, 1),
                         Text = Text,
-                        TextSize = 14,
-                        TextTransparency = 0.4,
+                        TextSize = 15,
+                        TextTransparency = 0.15,
                         TextTruncate = Enum.TextTruncate.AtEnd,
                         Parent = Item,
                     })
@@ -12018,7 +12188,7 @@ do
                     Button.MouseLeave:Connect(function()
                         TweenService:Create(Item, Library.TweenInfo, { BackgroundTransparency = 1 }):Play()
                     end)
-                    Button.MouseButton1Click:Connect(function()
+                    Library:OnActivate(Button, function()
                         ApplyBulkSelection(State, Search)
                     end)
 
@@ -12079,8 +12249,8 @@ do
                     Position = ValueImage and UDim2.fromOffset(30, 0) or UDim2.fromOffset(0, 0),
                     Size = ValueImage and UDim2.new(1, -30, 1, 0) or UDim2.fromScale(1, 1),
                     Text = FormattedValue,
-                    TextSize = 14,
-                    TextTransparency = 0.5,
+                    TextSize = 15,
+                    TextTransparency = 0.15,
                     TextTruncate = Enum.TextTruncate.AtEnd,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = Item,
@@ -12096,7 +12266,7 @@ do
 
                     Item.BackgroundTransparency = Selected and 0 or 1
                     ItemStroke.Transparency = Selected and 0.2 or 0.7
-                    Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.4
+                    Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.1
 
                     if Image then
                         Image.ImageTransparency = IsDisabled and 0.8 or Selected and 0 or 0.4
@@ -12120,7 +12290,7 @@ do
 
                         TweenService:Create(Item, Library.TweenInfo, { BackgroundTransparency = 1 }):Play()
                     end)
-                    Button.MouseButton1Click:Connect(function()
+                    Library:OnActivate(Button, function()
                         ToggleValue(Value)
 
                         --// Picking one value is the whole job of a single select
@@ -12251,13 +12421,13 @@ do
             MenuTable:Toggle()
         end
 
-        table.insert(Dropdown.Connections, DisplayContainer.MouseButton1Click:Connect(ToggleDropdown))
-        table.insert(Dropdown.Connections, DisplayButton.MouseButton1Click:Connect(ToggleDropdown))
+        table.insert(Dropdown.Connections, Library:OnActivate(DisplayContainer, ToggleDropdown))
+        table.insert(Dropdown.Connections, Library:OnActivate(DisplayButton, ToggleDropdown))
 
         if ExpandButton then
             table.insert(
                 Dropdown.Connections,
-                ExpandButton.MouseButton1Click:Connect(function()
+                Library:OnActivate(ExpandButton, function()
                     Dropdown:ToggleExpanded()
                 end)
             )
@@ -12413,7 +12583,7 @@ do
 
         local Holder = New("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, Priority.Text and 39 or 21),
+            Size = UDim2.new(1, 0, 0, Priority.Text and 54 or 32),
             Visible = Priority.Visible,
             Parent = Container,
         })
@@ -12421,8 +12591,10 @@ do
         local Label = New("TextLabel", {
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 14),
+            Name = "PrimeLabel",
+            TextTruncate = Enum.TextTruncate.AtEnd,
             Text = Priority.Text,
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not not Info.Text,
             ZIndex = 3,
@@ -12430,10 +12602,11 @@ do
         })
 
         local DisplayContainer = New("TextButton", {
+            Name = "PrimeDropdownControl",
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
             Position = UDim2.fromScale(0, 1),
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1, 0, 0, 32),
             Text = "",
             TextTransparency = 1,
             ZIndex = 2,
@@ -12442,7 +12615,7 @@ do
 
         New("UIPadding", {
             PaddingLeft = UDim.new(0, 8),
-            PaddingRight = UDim.new(0, 4),
+            PaddingRight = UDim.new(0, 8),
             Parent = DisplayContainer,
         })
 
@@ -12460,17 +12633,21 @@ do
         }); table.insert(Library.SpecificCorners, DropdownCorner)
 
         local DisplayButton = New("TextButton", {
+            Name = "PrimeValue",
+            AnchorPoint=Vector2.new(0,.5),Position=UDim2.fromScale(0,.5),
+            TextYAlignment=Enum.TextYAlignment.Center,
             Active = not Priority.Disabled,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 21),
+            Size = UDim2.new(1,Info.Expandable~=false and -52 or -24,1,0),
             Text = "---",
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             ZIndex = 2,
             Parent = DisplayContainer,
         })
 
         local ArrowImage = New("ImageLabel", {
+            Name = "PrimeDropdownChevron",
             AnchorPoint = Vector2.new(1, 0.5),
             ImageColor3 = "FontColor",
             ImageTransparency = 0.5,
@@ -12479,7 +12656,7 @@ do
             Parent = DisplayContainer,
         })
         if ArrowIcon then
-            Library:ApplyLucideIcon(ArrowImage, ArrowIcon)
+            Library:ApplyLucideIcon(ArrowImage, ArrowIcon, 180)
         end
 
         --// Opens the whole list in a panel over the window for easier ranking
@@ -12491,20 +12668,22 @@ do
             ExpandButton = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 BackgroundTransparency = 1,
-                Position = UDim2.new(1, -18, 0.5, 0),
-                Size = UDim2.fromOffset(16, 16),
+                Position = UDim2.new(1, -20, 0.5, 0),
+                Size = UDim2.fromOffset(28, 28),
                 Text = "",
                 ZIndex = 3,
                 Parent = DisplayContainer,
             })
             ExpandIconImage = New("ImageLabel", {
+                Name="PrimeExpandGlyph",
+                AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),
                 Image = ExpandIcon and ExpandIcon.Url or "",
                 ImageColor3 = "FontColor",
                 ImageRectOffset = ExpandIcon and ExpandIcon.ImageRectOffset or Vector2.zero,
                 ImageRectSize = ExpandIcon and ExpandIcon.ImageRectSize or Vector2.zero,
                 ImageTransparency = 0.5,
                 ScaleType = Enum.ScaleType.Fit,
-                Size = UDim2.fromScale(1, 1),
+                Size = UDim2.fromOffset(14,14),
                 ZIndex = 3,
                 Parent = ExpandButton,
             })
@@ -12526,15 +12705,15 @@ do
             SearchBox = New("TextBox", {
                 BackgroundTransparency = 1,
                 PlaceholderText = "Search...",
-                Position = UDim2.fromOffset(-8, 0),
-                Size = UDim2.new(1, ExpandButton and -34 or -12, 1, 0),
-                TextSize = 14,
+                Position = UDim2.fromOffset(0, 0),
+                Size = UDim2.fromScale(1,1),
+                TextSize = 15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = false,
                 Parent = DisplayButton,
             })
             New("UIPadding", {
-                PaddingLeft = UDim.new(0, 8),
+                PaddingLeft = UDim.new(0, 0),
                 Parent = SearchBox,
             })
 
@@ -12569,7 +12748,13 @@ do
                 DisplayButton.TextTransparency = (Active and SearchBox) and 1 or 0
 
                 ArrowImage.ImageTransparency = Active and 0 or 0.5
-                ArrowImage.Rotation = Active and 180 or 0
+                if Library.PrimeMotion then
+                    Library.PrimeMotion:To(ArrowImage,{Rotation=Active and 0 or 180},30,1)
+                elseif Library.ReducedMotion then
+                    ArrowImage.Rotation=Active and 0 or 180
+                else
+                    TweenService:Create(ArrowImage,Library.TweenInfo,{Rotation=Active and 0 or 180}):Play()
+                end
 
                 if SearchBox then
                     SearchBox.Text = ""
@@ -12629,9 +12814,6 @@ do
                 Str = Str .. string.format("  (+%d)", #Priority.Value - 1)
             end
 
-            if #Str > 25 then
-                Str = Str:sub(1, 22) .. "..."
-            end
 
             DisplayButton.Text = (Str == "" and "---" or Str)
         end
@@ -12888,7 +13070,7 @@ do
                 Size = UDim2.fromOffset(20, ItemHeight),
                 Text = "1",
                 TextSize = 13,
-                TextTransparency = 0.4,
+                TextTransparency = 0.15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Container,
             })
@@ -12898,7 +13080,7 @@ do
                 Position = UDim2.fromOffset(46, 0),
                 Size = UDim2.new(1, -52, 0, ItemHeight),
                 Text = FormatValue(Value),
-                TextSize = 14,
+                TextSize = 15,
                 TextTransparency = 0.35,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
@@ -13079,8 +13261,8 @@ do
                 Position = UDim2.fromOffset(32, 0),
                 Size = UDim2.new(0, 26, 1, 0),
                 Text = "1",
-                TextSize = 14,
-                TextTransparency = 0.4,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Container,
             })
@@ -13254,7 +13436,7 @@ do
             CloseButton.MouseLeave:Connect(function()
                 TweenService:Create(CloseButton, Library.TweenInfo, { BackgroundTransparency = 1 }):Play()
             end)
-            CloseButton.MouseButton1Click:Connect(function()
+            Library:OnActivate(CloseButton, function()
                 Priority:Collapse()
             end)
 
@@ -13269,7 +13451,7 @@ do
                     Position = UDim2.fromOffset(10, 42),
                     Size = UDim2.new(1, -20, 0, 26),
                     Text = "",
-                    TextSize = 14,
+                    TextSize = 15,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = ExpandFrame,
                 })
@@ -13326,13 +13508,13 @@ do
                 Position = UDim2.fromOffset(0, ListTop + 14),
                 Size = UDim2.new(1, 0, 0, 16),
                 Text = "No matching values",
-                TextSize = 14,
-                TextTransparency = 0.5,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 Visible = false,
                 Parent = ExpandFrame,
             })
 
-            ExpandOverlay.MouseButton1Click:Connect(function()
+            Library:OnActivate(ExpandOverlay, function()
                 Priority:Collapse()
             end)
         end
@@ -13513,7 +13695,7 @@ do
 
         function Priority:SetText(Text: string)
             Priority.Text = Text
-            Holder.Size = UDim2.new(1, 0, 0, Text and 39 or 21)
+            Holder.Size = UDim2.new(1, 0, 0, Text and 54 or 32)
             Label.Text = Text and Text or ""
             Label.Visible = not not Text
         end
@@ -13525,11 +13707,11 @@ do
             MenuTable:Toggle()
         end
 
-        table.insert(Priority.Connections, DisplayContainer.MouseButton1Click:Connect(ToggleDropdown))
-        table.insert(Priority.Connections, DisplayButton.MouseButton1Click:Connect(ToggleDropdown))
+        table.insert(Priority.Connections, Library:OnActivate(DisplayContainer, ToggleDropdown))
+        table.insert(Priority.Connections, Library:OnActivate(DisplayButton, ToggleDropdown))
 
         if ExpandButton then
-            table.insert(Priority.Connections, ExpandButton.MouseButton1Click:Connect(function()
+            table.insert(Priority.Connections, Library:OnActivate(ExpandButton, function()
                 Priority:ToggleExpanded()
             end))
         end
@@ -14244,6 +14426,7 @@ do
         })
 
         local TitleLabel = New("TextLabel", {
+            Name = "PrimeTitle",
             BackgroundTransparency = 1,
             LayoutOrder = 1,
             RichText = true,
@@ -14262,7 +14445,7 @@ do
             Size = UDim2.new(1, 0, 0, DiscordCard.SUBTITLE_HEIGHT),
             Text = Discord.Subtitle,
             TextSize = 13,
-            TextTransparency = 0.4,
+            TextTransparency = 0.15,
             TextTruncate = Enum.TextTruncate.AtEnd,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Body,
@@ -14435,7 +14618,7 @@ do
                 BackgroundTransparency = 1,
                 Size = UDim2.fromOffset(0, 16),
                 Text = Label,
-                TextSize = 14,
+                TextSize = 15,
                 TextTransparency = IsPrimary and 0 or 0.25,
                 Parent = Content,
             })
@@ -14491,7 +14674,7 @@ do
 
             ButtonObject.Flash = Flash
 
-            table.insert(Discord.Connections, Base.MouseButton1Click:Connect(function()
+            table.insert(Discord.Connections, Library:OnActivate(Base, function()
                 --// Copy = true takes the card Link; Copy = "..." carries its own payload
                 local Payload = Config.Copy
                 if Payload == true then
@@ -15426,7 +15609,7 @@ function Library:Notify(...)
                 ImageTransparency = 0.5,
             }):Play()
         end)
-        CloseButton.MouseButton1Click:Connect(function()
+        Library:OnActivate(CloseButton, function()
             Data:Destroy("user")
         end)
     end
@@ -15528,7 +15711,7 @@ function Library:Notify(...)
             Size = UDim2.fromScale(0, 0),
             Text = Data.Description,
             TextColor3 = Data.DescriptionColor or "FontColor",
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextWrapped = true,
             Parent = TextContainer,
@@ -15559,8 +15742,8 @@ function Library:Notify(...)
                 BackgroundColor3 = "MainColor",
                 Size = UDim2.fromOffset(0, 22),
                 Text = tostring(Info.Text or "Button"),
-                TextSize = 14,
-                TextTransparency = 0.4,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 ZIndex = 6,
                 Parent = ButtonRow,
             })
@@ -15584,10 +15767,10 @@ function Library:Notify(...)
             end)
             Button.MouseLeave:Connect(function()
                 TweenService:Create(Button, Library.TweenInfo, {
-                    TextTransparency = 0.4,
+                    TextTransparency = 0.15,
                 }):Play()
             end)
-            Button.MouseButton1Click:Connect(function()
+            Library:OnActivate(Button, function()
                 if Data.Destroyed then
                     return
                 end
@@ -15838,6 +16021,7 @@ function Library:UpdateNotificationBadge()
         if Badge.Holder and Badge.Holder.Parent then
             Badge.Holder.Visible = Count > 0
             Badge.Label.Text = Text
+            Badge.Holder.Size = UDim2.fromOffset(math.max(14, #Text * 6 + 4), 14)
         end
     end
 end
@@ -15941,6 +16125,7 @@ function Library:_BuildNotificationHistory()
     Library:AddOutline(Holder)
 
     local TitleLabel = New("TextLabel", {
+            Name = "PrimeTitle",
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 34),
         Text = "Notification History",
@@ -15968,7 +16153,7 @@ function Library:_BuildNotificationHistory()
         Size = UDim2.fromOffset(20, 20),
         Text = CloseIcon and "" or "X",
         TextColor3 = "FontColor",
-        TextSize = 14,
+        TextSize = 15,
         TextTransparency = 0.35,
         ZIndex = 11,
         Parent = Holder,
@@ -16002,7 +16187,7 @@ function Library:_BuildNotificationHistory()
             TweenService:Create(CloseImage, Library.TweenInfo, { ImageTransparency = 0.35 }):Play()
         end
     end)
-    CloseButton.MouseButton1Click:Connect(function()
+    Library:OnActivate(CloseButton, function()
         Library:SetNotificationHistoryVisible(false)
     end)
 
@@ -16078,8 +16263,8 @@ function Library:RefreshNotificationHistory()
             Size = UDim2.new(1, 0, 0, 24),
             Text = "No notifications yet.",
             TextColor3 = "FontColor",
-            TextTransparency = 0.4,
-            TextSize = 14,
+            TextTransparency = 0.15,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = Scroller,
         })
@@ -16171,7 +16356,7 @@ function Library:RefreshNotificationHistory()
                 TweenService:Create(CopyImage, Library.TweenInfo, { ImageTransparency = 0.55 }):Play()
             end
         end)
-        Card.MouseButton1Click:Connect(function()
+        Library:OnActivate(Card, function()
             local Parts = {}
             if Entry.TimeString then
                 table.insert(Parts, string.format("[%s]", tostring(Entry.TimeString)))
@@ -16285,7 +16470,7 @@ function Library:RefreshNotificationHistory()
                 Size = UDim2.new(1, 0, 0, 0),
                 Text = tostring(Entry.Description),
                 TextColor3 = Entry.DescriptionColor or "FontColor",
-                TextSize = 14,
+                TextSize = 15,
                 TextWrapped = true,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Content,
@@ -16380,6 +16565,14 @@ function Library:CreateWindow(WindowInfo)
     if typeof(WindowInfo.Font) == "EnumItem" then
         WindowInfo.Font = Font.fromEnum(WindowInfo.Font :: any)
     end
+    if WindowInfo.FontFamily then
+        local ok, family = pcall(function()
+            TextService:GetFamilyInfoAsync(WindowInfo.FontFamily)
+            return Font.new(WindowInfo.FontFamily, Enum.FontWeight.Medium)
+        end)
+        if ok then WindowInfo.Font = family
+        else warn("[ObsidianPrime] FontFamily unavailable; using configured fallback Font") end
+    end
     WindowInfo.CornerRadius = math.min(WindowInfo.CornerRadius, 20)
 
     local TabButtonsStyle = WindowInfo.TabButtonsStyle
@@ -16412,11 +16605,13 @@ function Library:CreateWindow(WindowInfo)
         Enum.EasingDirection.Out
     )
     Library.TabSwipeOffset = math.max(1, WindowInfo.TabSwipeOffset or 26)
-    Library.TabSwipeFrom = WindowInfo.TabSwipeFrom or "right"
+    Library.TabSwipeFrom = WindowInfo.TabSwipeFrom or "bottom"
 
     local MainFrame
     local DividerLine
     local TitleHolder
+    local SidebarPane
+    local HeaderSurface
     local WindowTitle
     local WindowIcon
     local RightWrapper
@@ -16465,9 +16660,8 @@ function Library:CreateWindow(WindowInfo)
     local MiniLabels = {}
     local MiniSubtitleExplicit = (WindowInfo.MinimizedSubtitle or "") ~= ""
     --// Extra room reserved at the right of the top bar for the notification bell
-    --// and (when enabled) the minimize button, which sit beside the move icon
-    --// rather than in the search row
-    local RightBarInset = (WindowInfo.Minimizable and 28 or 0) + 30
+    --// and (when enabled) the minimize button, each with a 32 px target + 8 px gap.
+    local RightBarInset = (WindowInfo.Minimizable and 40 or 0) + (WindowInfo.DisableNotificationBell and 0 or 40)
 
     do
         Library.KeybindFrame, Library.KeybindContainer = Library:AddDraggableMenu("Keybinds")
@@ -16475,12 +16669,14 @@ function Library:CreateWindow(WindowInfo)
         Library.KeybindFrame.Position = UDim2.new(0, 6, 0.5, 0)
         Library.KeybindFrame.Visible = false
 
-        MainFrame = New("TextButton", {
+        MainFrame = New(WindowInfo.GroupFade and "CanvasGroup" or "TextButton", {
             BackgroundColor3 = function()
                 return Library:GetBetterColor(Library.Scheme.BackgroundColor, -1)
             end,
             Name = "Main",
-            Text = "",
+            Text = if WindowInfo.GroupFade then nil else "",
+            Active = true,
+            BorderSizePixel = 0,
             Position = WindowInfo.Position,
             Size = WindowInfo.Size,
             Visible = false,
@@ -16503,11 +16699,12 @@ function Library:CreateWindow(WindowInfo)
         )
         Library:AddOutline(MainFrame)
         Library:MakeLine(MainFrame, {
-            Position = UDim2.fromOffset(0, 48),
+            Position = UDim2.fromOffset(0, 56),
             Size = UDim2.new(1, 0, 0, 1),
         })
 
         DividerLine = New("Frame", {
+            Name = "ImperiumSidebarDivider",
             BackgroundColor3 = "OutlineColor",
             Position = UDim2.fromOffset(InitialLeftWidth, 0),
             Size = UDim2.new(0, 1, 1, -21),
@@ -16569,18 +16766,49 @@ function Library:CreateWindow(WindowInfo)
         Library.DefaultWindowSize = MainFrame.Size
         Library.DefaultWindowPosition = MainFrame.Position
 
+        --// A single material spans the logo, navigation and footer.
+        SidebarPane = New("Frame", {Name="PrimeSidebarPane", BackgroundColor3="BackgroundColor",
+            BackgroundTransparency=.65, Size=UDim2.new(0,InitialLeftWidth,1,0), ZIndex=0, Parent=MainFrame})
+        New("UICorner", {CornerRadius=UDim.new(0,WindowInfo.CornerRadius),
+            TopLeftRadius=UDim.new(0,WindowInfo.CornerRadius), BottomLeftRadius=UDim.new(0,WindowInfo.CornerRadius),
+            TopRightRadius=UDim.new(0,0), BottomRightRadius=UDim.new(0,0), Parent=SidebarPane})
+        local SidebarHairline=New("Frame", {Name="PrimeSidebarHairline", BackgroundColor3="FontColor",
+            BackgroundTransparency=.88, AnchorPoint=Vector2.new(1,0), Position=UDim2.new(1,0,0,16),
+            Size=UDim2.new(0,1,1,-32), Active=false, Parent=SidebarPane})
+        New("UIGradient", {Rotation=90, Transparency=NumberSequence.new({
+            NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(.15,0),
+            NumberSequenceKeypoint.new(.85,0), NumberSequenceKeypoint.new(1,1)}),Parent=SidebarHairline})
+
         --// Top Bar \\-
         TopBar = New("Frame", {
+            Name = "PrimeHeader",
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 48),
+            Size = UDim2.new(1, 0, 0, 56),
             Parent = MainFrame,
         })
+        HeaderSurface = New("Frame", {Name="PrimeHeaderSurface", BackgroundColor3="MainColor",
+            BackgroundTransparency=.35, Position=UDim2.fromOffset(InitialLeftWidth,0),
+            Size=UDim2.new(1,-InitialLeftWidth,1,0),ZIndex=0,Parent=TopBar})
         Library:MakeDraggable(MainFrame, TopBar, false, true, WindowSnapConfig)
+        if WindowInfo.FrameEdgeDrag then
+            for _, spec in ipairs({
+                {"Top", UDim2.fromOffset(0,0), UDim2.new(1,0,0,8)},
+                {"Left", UDim2.fromOffset(0,8), UDim2.new(0,8,1,-16)},
+                {"Right", UDim2.new(1,-8,0,8), UDim2.new(0,8,1,-40)},
+                {"Bottom", UDim2.new(0,0,1,-8), UDim2.new(1,-32,0,8)},
+            }) do
+                local Edge = New("Frame", {Name="PrimeDragEdge"..spec[1], Active=true,
+                    BackgroundTransparency=1, Position=spec[2], Size=spec[3], ZIndex=8, Parent=MainFrame})
+                Library:MakeDraggable(MainFrame, Edge, false, true, WindowSnapConfig)
+            end
+        end
 
         --// Title \\--
         TitleHolder = New("Frame", {
+            Name = "PrimeHeaderTitle",
+            AnchorPoint=Vector2.new(0,.5),Position=UDim2.fromOffset(0,24),
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, InitialLeftWidth, 1, 0),
+            Size = UDim2.new(0, InitialLeftWidth, 0, 32),
             Parent = TopBar,
         })
         New("UIListLayout", {
@@ -16590,6 +16818,10 @@ function Library:CreateWindow(WindowInfo)
             Padding = UDim.new(0, 6),
             Parent = TitleHolder,
         })
+        TitleHolder:FindFirstChildOfClass("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Left
+        New("UIPadding", {PaddingLeft=UDim.new(0,TabButtonsStyle.Padding+21-(WindowInfo.IconSize.Y.Offset/2)),
+            PaddingRight=UDim.new(0,TabButtonsStyle.Padding+12),Parent=TitleHolder})
+        TitleHolder.ClipsDescendants = true
 
         if WindowInfo.Icon then
             local Icon = Library:GetCustomIcon(WindowInfo.Icon)
@@ -16618,8 +16850,11 @@ function Library:CreateWindow(WindowInfo)
             (TitleHolder.AbsoluteSize.X / Library.DPIScale) - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 6 or 0) - 12
         )
         WindowTitle = New("TextLabel", {
+            Name = "PrimeTitle",
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, X, 1, 0),
+            Size = UDim2.new(1, -(WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 6 or 0), 1, 0),
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
             Text = WindowInfo.Title,
             TextSize = 20,
             Parent = TitleHolder,
@@ -16629,8 +16864,8 @@ function Library:CreateWindow(WindowInfo)
         RightWrapper = New("Frame", {
             AnchorPoint = Vector2.new(1, 0.5),
             BackgroundTransparency = 1,
-            Position = UDim2.new(1, -49 - RightBarInset, 0.5, 0),
-            Size = UDim2.new(1, -InitialLeftWidth - 57 - RightBarInset - 1, 1, -16),
+            Position = UDim2.new(1, -10 - RightBarInset, 0, 24),
+            Size = UDim2.new(1, -InitialLeftWidth - 17 - RightBarInset - 1, 0, 32),
             Parent = TopBar,
         })
 
@@ -16644,6 +16879,7 @@ function Library:CreateWindow(WindowInfo)
 
         --// Current Tab: name stacked over its description \\--
         CurrentTabInfo = New("Frame", {
+            ClipsDescendants = true,
             Size = UDim2.fromScale(WindowInfo.DisableSearch and 1 or 0.5, 1),
             Visible = false,
             BackgroundTransparency = 1,
@@ -16669,6 +16905,8 @@ function Library:CreateWindow(WindowInfo)
         })
 
         CurrentTabLabel = New("TextLabel", {
+            Name = "PrimeTitle",
+            TextTruncate = Enum.TextTruncate.AtEnd,
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
@@ -16679,31 +16917,42 @@ function Library:CreateWindow(WindowInfo)
         })
 
         CurrentTabDescription = New("TextLabel", {
+            TextTruncate = Enum.TextTruncate.AtEnd,
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             Text = "",
-            TextWrapped = true,
-            TextSize = 14,
+            TextWrapped = false,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
-            TextTransparency = 0.45,
+            TextTransparency = 0.15,
             Parent = CurrentTabInfo,
         })
 
         --// Search: a pill with the icon inside, on the right \\--
+        local SearchShell = New("Frame", {
+            Name="PrimeSearchShell", BackgroundTransparency=1, ClipsDescendants=true,
+            Size=UDim2.new(WindowInfo.SearchbarSize.X.Scale,WindowInfo.SearchbarSize.X.Offset,0,36),
+            Visible=not WindowInfo.DisableSearch, Parent=RightWrapper,
+        })
+        New("UIFlexItem",{FlexMode=Enum.UIFlexMode.Shrink,Parent=SearchShell})
         SearchBox = New("TextBox", {
+            ClipsDescendants = true,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextWrapped = false,
+            ClearTextOnFocus = false,
             BackgroundColor3 = "MainColor",
             PlaceholderText = "Search...",
-            Size = WindowInfo.SearchbarSize,
+            Name = "PrimeHeaderSearch",
+            Position = UDim2.fromOffset(2,2),
+            Size = UDim2.new(1,-4,1,-4),
             TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not (WindowInfo.DisableSearch or false),
-            Parent = RightWrapper,
+            Parent = SearchShell,
         })
-        New("UIFlexItem", {
-            FlexMode = Enum.UIFlexMode.Shrink,
-            Parent = SearchBox,
-        })
+        SearchBox:SetAttribute("ImperiumRadius",999)
+
         --// A pill at any radius, but square when the radius is 0
         table.insert(
             Library.PillCorners,
@@ -16743,12 +16992,12 @@ function Library:CreateWindow(WindowInfo)
             local SearchIconImage = New("ImageLabel", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 ImageColor3 = "FontColor",
-                ImageTransparency = 0.5,
+                ImageTransparency = 0.35,
                 --// Sits in the padding the text was pushed out of, so it does not
                 --// overlap the placeholder (the box's UIPadding also insets children)
-                Position = UDim2.new(0, -(SEARCHBOX_TEXT_INSET - 14), 0.5, 0),
+                Position = UDim2.new(0, 16, 0.5, 0),
                 Size = UDim2.fromOffset(16, 16),
-                Parent = SearchBox,
+                Parent = SearchShell,
             })
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
         end
@@ -16799,15 +17048,16 @@ function Library:CreateWindow(WindowInfo)
         if WindowInfo.Minimizable then
             local MinimizeIcon = Library:GetIcon("minus")
 
-            --// Sits beside the move icon in the top right, not in the search row
+            --// Rightmost action cell; utility icons share a 32 px centerline.
             local MinimizeButton = New("TextButton", {
+                Name = "PrimeHeaderMinimize",
                 AnchorPoint = Vector2.new(1, 0.5),
                 BackgroundColor3 = "MainColor",
                 BackgroundTransparency = 1,
-                Position = UDim2.new(1, -44, 0.5, 0),
-                Size = UDim2.fromOffset(24, 24),
+                Position = UDim2.new(1, -10, 0, 24),
+                Size = UDim2.fromOffset(32, 32),
                 Text = MinimizeIcon and "" or "—",
-                TextSize = 14,
+                TextSize = 15,
                 TextTransparency = 0.35,
                 ZIndex = 3,
                 Parent = TopBar,
@@ -16838,7 +17088,7 @@ function Library:CreateWindow(WindowInfo)
 
             Library:AddTooltip("Minimize", nil, MinimizeButton)
             MinimizeButton.MouseEnter:Connect(function()
-                TweenService:Create(MinimizeButton, Library.TweenInfo, { BackgroundTransparency = 0 }):Play()
+                TweenService:Create(MinimizeButton, Library.TweenInfo, { BackgroundTransparency = Library.PrimeMaterial and 1 or 0 }):Play()
                 if MinimizeImage then
                     TweenService:Create(MinimizeImage, Library.TweenInfo, { ImageTransparency = 0 }):Play()
                 end
@@ -16849,7 +17099,7 @@ function Library:CreateWindow(WindowInfo)
                     TweenService:Create(MinimizeImage, Library.TweenInfo, { ImageTransparency = 0.35 }):Play()
                 end
             end)
-            MinimizeButton.MouseButton1Click:Connect(function()
+            Library:OnActivate(MinimizeButton, function()
                 Library.Window:SetMinimized(true)
             end)
 
@@ -16971,7 +17221,7 @@ function Library:CreateWindow(WindowInfo)
                 Size = UDim2.new(1, 0, 0, 14),
                 Text = WindowInfo.MinimizedSubtitle or "",
                 TextSize = 12,
-                TextTransparency = 0.55,
+                TextTransparency = 0.15,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = (WindowInfo.MinimizedSubtitle or "") ~= "",
@@ -17021,7 +17271,7 @@ function Library:CreateWindow(WindowInfo)
                 if TooltipText then
                     Library:AddTooltip(TooltipText, nil, Btn)
                 end
-                Btn.MouseButton1Click:Connect(OnClick)
+                Library:OnActivate(Btn, OnClick)
                 return Btn
             end
 
@@ -17073,7 +17323,7 @@ function Library:CreateWindow(WindowInfo)
                 LayoutOrder = 4,
                 Size = UDim2.fromOffset(22, 22),
                 Text = RestoreIcon and "" or "^",
-                TextSize = 14,
+                TextSize = 15,
                 TextTransparency = 0.35,
                 Parent = MiniHeader,
             })
@@ -17094,7 +17344,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             Library:AddTooltip("Restore", nil, RestoreButton)
-            RestoreButton.MouseButton1Click:Connect(function()
+            Library:OnActivate(RestoreButton, function()
                 Library.Window:SetMinimized(false)
             end)
 
@@ -17142,7 +17392,7 @@ function Library:CreateWindow(WindowInfo)
                 Size = UDim2.fromScale(1, 1),
                 Text = "",
                 TextSize = 12,
-                TextTransparency = 0.6,
+                TextTransparency = 0.15,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = MiniFooterHolder,
@@ -17152,32 +17402,21 @@ function Library:CreateWindow(WindowInfo)
             Library:MakeDraggable(MiniFrame, MiniHeader, true)
         end
 
-        if MoveIcon then
-            local MoveIconImage = New("ImageLabel", {
-                AnchorPoint = Vector2.new(1, 0.5),
-                ImageColor3 = "AccentColor",
-                Position = UDim2.new(1, -10, 0.5, 0),
-                Size = UDim2.fromOffset(28, 28),
-                SizeConstraint = Enum.SizeConstraint.RelativeYY,
-                Parent = TopBar,
-            })
-            Library:ApplyLucideIcon(MoveIconImage, MoveIcon)
-        end
-
         if not WindowInfo.DisableNotificationBell then
-            --// Notification bell: sits left of the minimize/move cluster and
+            --// Notification bell: sits left of the minimize control and
             --// opens the built-in Notification History, with an unread badge
             local BellIcon = Library:GetIcon("bell")
-            local BellRightOffset = WindowInfo.Minimizable and 72 or 42
+            local BellRightOffset = WindowInfo.Minimizable and 50 or 10
 
             local BellButton = New("TextButton", {
+                Name = "PrimeHeaderBell",
                 AnchorPoint = Vector2.new(1, 0.5),
                 BackgroundColor3 = "MainColor",
                 BackgroundTransparency = 1,
-                Position = UDim2.new(1, -BellRightOffset, 0.5, 0),
-                Size = UDim2.fromOffset(24, 24),
+                Position = UDim2.new(1, -BellRightOffset, 0, 24),
+                Size = UDim2.fromOffset(32, 32),
                 Text = BellIcon and "" or "!",
-                TextSize = 14,
+                TextSize = 15,
                 TextTransparency = 0.35,
                 ZIndex = 3,
                 Parent = TopBar,
@@ -17210,9 +17449,10 @@ function Library:CreateWindow(WindowInfo)
 
             --// Unread count badge, hidden until there is something unread
             local BadgeHolder = New("Frame", {
+                Name = "PrimeNotificationBadge",
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundColor3 = "AccentColor",
-                Position = UDim2.new(1, 2, 0, -2),
+                Position = UDim2.new(1, 0, 0, 0),
                 Size = UDim2.fromOffset(14, 14),
                 Visible = false,
                 ZIndex = 5,
@@ -17244,7 +17484,7 @@ function Library:CreateWindow(WindowInfo)
 
             Library:AddTooltip("Notification History", nil, BellButton)
             BellButton.MouseEnter:Connect(function()
-                TweenService:Create(BellButton, Library.TweenInfo, { BackgroundTransparency = 0 }):Play()
+                TweenService:Create(BellButton, Library.TweenInfo, { BackgroundTransparency = Library.PrimeMaterial and 1 or 0 }):Play()
                 if BellImage then
                     TweenService:Create(BellImage, Library.TweenInfo, { ImageTransparency = 0 }):Play()
                 end
@@ -17255,13 +17495,14 @@ function Library:CreateWindow(WindowInfo)
                     TweenService:Create(BellImage, Library.TweenInfo, { ImageTransparency = 0.35 }):Play()
                 end
             end)
-            BellButton.MouseButton1Click:Connect(function()
+            Library:OnActivate(BellButton, function()
                 Library:ToggleNotificationHistory()
             end)
         end
 
         --// Bottom Bar \\--
         BottomBackground = New("Frame", {
+            BackgroundTransparency = 1,
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = function()
                 return Library:GetBetterColor(Library.Scheme.BackgroundColor, 4)
@@ -17302,6 +17543,8 @@ function Library:CreateWindow(WindowInfo)
         --// Footer \\-
         --// The footer is a row of segments; each one is plain or copyable
         local FooterHolder = New("Frame", {
+            Name = "PrimeFooter",
+            ClipsDescendants = true,
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 1),
             Parent = BottomBar,
@@ -17313,6 +17556,9 @@ function Library:CreateWindow(WindowInfo)
             Padding = UDim.new(0, 6),
             Parent = FooterHolder,
         })
+        FooterHolder:FindFirstChildOfClass("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Left
+        New("UIPadding", {PaddingLeft=UDim.new(0,TabButtonsStyle.Padding+12),
+            PaddingRight=UDim.new(0,32),Parent=FooterHolder})
 
         local function AddFooterSegment(Info)
             local Text = tostring(Info.Text or "")
@@ -17325,8 +17571,8 @@ function Library:CreateWindow(WindowInfo)
                 Size = UDim2.new(0, 0, 1, 0),
                 Text = Text,
                 TextColor3 = Copyable and "BlueColor" or "FontColor",
-                TextSize = 14,
-                TextTransparency = Copyable and 0 or 0.5,
+                TextSize = 15,
+                TextTransparency = Copyable and 0 or 0.15,
                 Parent = FooterHolder,
             })
             table.insert(FooterSegments, Label)
@@ -17402,7 +17648,7 @@ function Library:CreateWindow(WindowInfo)
                 end)
             end
 
-            CopyButton.MouseButton1Click:Connect(Copy)
+            Library:OnActivate(CopyButton, Copy)
             CopyButton.MouseEnter:Connect(function()
                 TweenService:Create(CopyButton, Library.TweenInfo, { BackgroundTransparency = 0 }):Play()
             end)
@@ -17533,12 +17779,14 @@ function Library:CreateWindow(WindowInfo)
 
         --// Tabs \\--
         Tabs = New("ScrollingFrame", {
+            Name = "PrimeSidebar",
+            BackgroundTransparency = 1,
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = "BackgroundColor",
             CanvasSize = UDim2.fromScale(0, 0),
-            Position = UDim2.fromOffset(0, 49),
+            Position = UDim2.fromOffset(0, 57),
             ScrollBarThickness = 0,
-            Size = UDim2.new(0, InitialLeftWidth, 1, -70),
+            Size = UDim2.new(0, InitialLeftWidth, 1, -78),
             Parent = MainFrame,
         })
         New("UIListLayout", {
@@ -17555,14 +17803,15 @@ function Library:CreateWindow(WindowInfo)
 
         --// Container \\--
         Container = New("Frame", {
+            BackgroundTransparency = 1,
             AnchorPoint = Vector2.new(1, 0),
             BackgroundColor3 = function()
                 return Library:GetBetterColor(Library.Scheme.BackgroundColor, 1)
             end,
             ClipsDescendants = true,
             Name = "Container",
-            Position = UDim2.new(1, 0, 0, 49),
-            Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -70),
+            Position = UDim2.new(1, 0, 0, 57),
+            Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -78),
             Parent = MainFrame,
         })
         New("UIPadding", {
@@ -18160,10 +18409,13 @@ function Library:CreateWindow(WindowInfo)
 
         DividerLine.Position = UDim2.fromOffset(Width, 0)
 
-        TitleHolder.Size = UDim2.new(0, Width, 1, 0)
-        RightWrapper.Size = UDim2.new(1, -Width - 57 - RightBarInset - 1, 1, -16)
-        Tabs.Size = UDim2.new(0, Width, 1, -70)
-        Container.Size = UDim2.new(1, -Width - 1, 1, -70)
+        TitleHolder.Size = UDim2.new(0, Width, 0, 32)
+        RightWrapper.Size = UDim2.new(1, -Width - 17 - RightBarInset - 1, 0, 32)
+        SidebarPane.Size = UDim2.new(0,Width,1,0)
+        HeaderSurface.Position=UDim2.fromOffset(Width,0)
+        HeaderSurface.Size=UDim2.new(1,-Width,1,0)
+        Tabs.Size = UDim2.new(0, Width, 1, -78)
+        Container.Size = UDim2.new(1, -Width - 1, 1, -78)
 
         if WindowInfo.EnableCompacting then
             ApplyCompact()
@@ -18321,12 +18573,15 @@ function Library:CreateWindow(WindowInfo)
                 Parent = ButtonHolder,
             })
             TabLabel = New("TextLabel", {
+                Name = "PrimeSidebarLabel",
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextWrapped = false,
                 BackgroundTransparency = 1,
                 Position = UDim2.fromOffset(30, 0),
                 Size = UDim2.new(1, -30, 1, 0),
                 Text = Name,
                 TextSize = 16,
-                TextTransparency = 0.5,
+                TextTransparency = 0.15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = not IsCompact,
                 Parent = ButtonHolder,
@@ -18360,7 +18615,7 @@ function Library:CreateWindow(WindowInfo)
             Library:AddTooltip(TabTooltipText, DisabledTooltip, TabButton, "Sidebar")
 
             --// Tab Container \\--
-            TabContainer = New("Frame", {
+            TabContainer = New(WindowInfo.GroupFade and "CanvasGroup" or "Frame", {
                 BackgroundTransparency = 1,
                 Position = UDim2.fromScale(0, 0),
                 Size = UDim2.fromScale(1, 1),
@@ -18384,7 +18639,7 @@ function Library:CreateWindow(WindowInfo)
             New("UIPadding", {
                 PaddingBottom = UDim.new(0, 2),
                 PaddingLeft = UDim.new(0, 2),
-                PaddingRight = UDim.new(0, 2),
+                PaddingRight = UDim.new(0, 8),
                 PaddingTop = UDim.new(0, 2),
                 Parent = TabLeft,
             })
@@ -18420,7 +18675,7 @@ function Library:CreateWindow(WindowInfo)
             New("UIPadding", {
                 PaddingBottom = UDim.new(0, 2),
                 PaddingLeft = UDim.new(0, 2),
-                PaddingRight = UDim.new(0, 2),
+                PaddingRight = UDim.new(0, 8),
                 PaddingTop = UDim.new(0, 2),
                 Parent = TabRight,
             })
@@ -18588,11 +18843,12 @@ function Library:CreateWindow(WindowInfo)
             })
 
             WarningTitle = New("TextLabel", {
+            Name = "PrimeTitle",
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, -4, 0, 14),
                 Text = "",
                 TextColor3 = Color3.fromRGB(255, 50, 50),
-                TextSize = 14,
+                TextSize = 15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = WarningBoxScrollingFrame,
             })
@@ -18619,7 +18875,7 @@ function Library:CreateWindow(WindowInfo)
                 Position = UDim2.fromOffset(0, 16),
                 Size = UDim2.new(1, -4, 0, 0),
                 Text = "",
-                TextSize = 14,
+                TextSize = 15,
                 TextWrapped = true,
                 Parent = WarningBoxScrollingFrame,
                 TextXAlignment = Enum.TextXAlignment.Left,
@@ -18747,6 +19003,7 @@ function Library:CreateWindow(WindowInfo)
 
             do
                 TabboxHolder = New("Frame", {
+                    Name = "PrimeTabboxSurface",
                     BackgroundColor3 = "BackgroundColor",
                     --// Flush inside a groupbox; own card when standalone
                     BackgroundTransparency = InGroupbox and 1 or 0,
@@ -18767,17 +19024,21 @@ function Library:CreateWindow(WindowInfo)
                 --// An invisible track the pill is positioned against; the header
                 --// itself stays flat so the row reads as part of the card
                 TabboxRail = New("Frame", {
+                    Name = "PrimeRecess",
+                    BackgroundColor3 = "BackgroundColor",
                     AnchorPoint = Vector2.new(0, 0.5),
                     BackgroundTransparency = 1,
-                    Position = UDim2.new(0, TABBOX_RAIL_INSET, 0, 17),
+                    Position = UDim2.new(0, TABBOX_RAIL_INSET, 0, 24),
                     Size = UDim2.new(1, -TABBOX_RAIL_INSET * 2, 0, TABBOX_RAIL_HEIGHT),
                     ZIndex = 1,
                     Parent = TabboxHolder,
                 })
+                New("UICorner",{CornerRadius=UDim.new(0,999),Parent=TabboxRail})
 
                 --// The soft pill that slides onto the open tab, in the same colour
                 --// and outline as the other elements
                 TabboxChip = New("Frame", {
+                    Name = "PrimeSegment",
                     AnchorPoint = Vector2.new(0, 0.5),
                     BackgroundColor3 = "MainColor",
                     Position = UDim2.new(0, TABBOX_CHIP_INSET, 0.5, 0),
@@ -18800,6 +19061,7 @@ function Library:CreateWindow(WindowInfo)
                 --// Short accent marker along the pill's bottom edge; it scales with
                 --// the pill, so it follows the slide for free
                 local TabboxMarker = New("Frame", {
+                    Visible = WindowInfo.SubTabUnderline,
                     AnchorPoint = Vector2.new(0.5, 1),
                     BackgroundColor3 = "AccentColor",
                     Position = UDim2.fromScale(0.5, 1),
@@ -18813,7 +19075,8 @@ function Library:CreateWindow(WindowInfo)
 
                 TabboxButtons = New("Frame", {
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 34),
+                    Position = UDim2.fromOffset(0,8),
+                    Size = UDim2.new(1, 0, 0, 32),
                     ZIndex = 2,
                     Parent = TabboxHolder,
                 })
@@ -18830,7 +19093,7 @@ function Library:CreateWindow(WindowInfo)
 
                 --// Full-width separator under the tab row (header divider)
                 Library:MakeLine(TabboxHolder, {
-                    Position = UDim2.fromOffset(0, 34),
+                    Position = UDim2.fromOffset(0, 44),
                     Size = UDim2.new(1, 0, 0, 1),
                 })
             end
@@ -18925,12 +19188,13 @@ function Library:CreateWindow(WindowInfo)
 
                 local Button = New("TextButton", {
                     BackgroundTransparency = 1,
-                    Size = UDim2.fromOffset(0, 34),
+                    Size = UDim2.fromOffset(0, 32),
                     Text = "",
                     ZIndex = 2,
                     Parent = TabboxButtons,
                 })
 
+                Button:SetAttribute("ImperiumRadius",999)
                 --// The chip carries the shape now, so the button itself is only a
                 --// hit area; the corner is kept so :UpdateCorners has something to
                 --// answer to when the window radius changes
@@ -18980,26 +19244,38 @@ function Library:CreateWindow(WindowInfo)
                     })
                 end
 
+                local ContentFade
+                local ContentGeneration = 0
+                if WindowInfo.GroupFade and Library.PrimeMotion then
+                    ContentFade = New("CanvasGroup", {
+                        Name = "ImperiumTabboxContent",
+                        BackgroundTransparency = 1,
+                        Size = UDim2.fromScale(1, 1),
+                        Visible = false,
+                        Parent = TabboxHolder,
+                    })
+                end
                 local Container = New("ScrollingFrame", {
                     AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
                     CanvasSize = UDim2.fromScale(0, 0),
-                    Position = UDim2.fromOffset(0, 35),
+                    Name = "PrimeCardScroll",
+                    Position = UDim2.fromOffset(4, 48),
                     ScrollBarThickness = 0,
-                    Size = UDim2.new(1, 0, 1, -35),
+                    Size = UDim2.new(1, -8, 1, -52),
                     Visible = false,
-                    Parent = TabboxHolder,
+                    Parent = ContentFade or TabboxHolder,
                 })
                 local List = New("UIListLayout", {
                     Padding = UDim.new(0, 8),
                     Parent = Container,
                 })
                 New("UIPadding", {
-                    PaddingBottom = UDim.new(0, 7),
-                    PaddingLeft = UDim.new(0, 7),
-                    PaddingRight = UDim.new(0, 7),
-                    PaddingTop = UDim.new(0, 7),
+                    PaddingBottom = UDim.new(0, 10),
+                    PaddingLeft = UDim.new(0, 8),
+                    PaddingRight = UDim.new(0, 8),
+                    PaddingTop = UDim.new(0, 8),
                     Parent = Container,
                 })
 
@@ -19069,6 +19345,23 @@ function Library:CreateWindow(WindowInfo)
                     SetState(true, true)
 
                     Container.Visible = true
+                    ContentGeneration += 1
+                    if ContentFade then
+                        Library.PrimeMotion:Cancel(ContentFade)
+                        local wasVisible=ContentFade.Visible
+                        ContentFade.Visible=true
+                        ContentFade.ZIndex=1
+                        if not Library.ReducedMotion and Library.Animations and Library.Animations.TabSwitch and PreviousActive and PreviousActive~=Tab then
+                            if not wasVisible then
+                                ContentFade.Position=UDim2.fromOffset(0,10)
+                                ContentFade.GroupTransparency=1
+                            end
+                            Library.PrimeMotion:To(ContentFade,{Position=UDim2.fromScale(0,0),GroupTransparency=0},27,1)
+                        else
+                            ContentFade.Position=UDim2.fromScale(0,0)
+                            ContentFade.GroupTransparency=0
+                        end
+                    end
 
                     Tabbox.ActiveTab = Tab
                     Tab:Resize()
@@ -19078,23 +19371,47 @@ function Library:CreateWindow(WindowInfo)
 
                     --// Smooth content switch: slide the container up into place.
                     --// Only on a real switch, so the initial build doesn't jump.
-                    if PreviousActive and PreviousActive ~= Tab
+                    if not ContentFade and PreviousActive and PreviousActive ~= Tab
                         and Library.Animations and Library.Animations.TabSwitch and not Tabbox.PoppedOut
                     then
-                        Container.Position = UDim2.fromOffset(0, 45)
-                        TweenService:Create(Container, Library.TabTransitionInfo, {
-                            Position = UDim2.fromOffset(0, 35),
-                        }):Play()
+                        if Library.PrimeMotion then Library.PrimeMotion:Cancel(Container) end
+                        if Library.ReducedMotion then
+                            Container.Position=UDim2.fromOffset(4,48)
+                        elseif Library.PrimeMotion then
+                            Container.Position=UDim2.fromOffset(4,58)
+                            Library.PrimeMotion:To(Container,{Position=UDim2.fromOffset(4,48)},27,1)
+                        else
+                            Container.Position=UDim2.fromOffset(4,58)
+                            TweenService:Create(Container,Library.TabTransitionInfo,{Position=UDim2.fromOffset(4,48)}):Play()
+                        end
                     else
-                        Container.Position = UDim2.fromOffset(0, 35)
+                        Container.Position = UDim2.fromOffset(4, 48)
                     end
 
                     Tabbox:RefreshPopOutPlaceholder()
                 end
 
                 function Tab:Hide()
+                    if Library.PrimeMotion then Library.PrimeMotion:Cancel(Container) end
                     SetState(false, true)
-                    Container.Visible = false
+                    ContentGeneration += 1
+                    local generation=ContentGeneration
+                    if ContentFade then
+                        Library.PrimeMotion:Cancel(ContentFade)
+                        ContentFade.ZIndex=0
+                        local function finish()
+                            if generation~=ContentGeneration or not ContentFade.Parent then return end
+                            ContentFade.Visible=false
+                            Container.Visible=false
+                        end
+                        if not Library.ReducedMotion and Library.Animations and Library.Animations.TabSwitch then
+                            Library.PrimeMotion:To(ContentFade,{Position=UDim2.fromOffset(0,-6),GroupTransparency=1},34,1,finish)
+                        else
+                            finish()
+                        end
+                    else
+                        Container.Visible = false
+                    end
 
                     if Tabbox.ActiveTab == Tab then
                         Tabbox.ActiveTab = nil
@@ -19106,12 +19423,12 @@ function Library:CreateWindow(WindowInfo)
                         return
                     end
 
-                    local ContentSize = (List.AbsoluteContentSize.Y / Library.DPIScale) + 14
+                    local ContentSize = (List.AbsoluteContentSize.Y / Library.DPIScale) + 18
                     if Tabbox.PoppedOut then
-                        ContentSize = math.min(ContentSize, GetPopOutBodyMaxHeight(Tabbox, 35))
+                        ContentSize = math.min(ContentSize, GetPopOutBodyMaxHeight(Tabbox, 52))
                     end
 
-                    TabboxHolder.Size = UDim2.new(1, 0, 0, ContentSize + 35)
+                    TabboxHolder.Size = UDim2.new(1, 0, 0, ContentSize + 52)
                     if ParentObj.Type == "Groupbox" then
                         ParentObj:Resize()
                     end
@@ -19149,6 +19466,12 @@ function Library:CreateWindow(WindowInfo)
                         Container:Destroy()
                     end
 
+                    if ContentFade then
+                        ContentGeneration += 1
+                        Library.PrimeMotion:Cancel(ContentFade)
+                        ContentFade:Destroy()
+                    end
+
                     if Button then
                         Button:Destroy()
                     end
@@ -19159,7 +19482,7 @@ function Library:CreateWindow(WindowInfo)
                     Tab:Show()
                 end
 
-                Button.MouseButton1Click:Connect(Tab.Show)
+                Library:OnActivate(Button, Tab.Show)
 
                 setmetatable(Tab, BaseGroupbox)
 
@@ -19314,7 +19637,9 @@ function Library:CreateWindow(WindowInfo)
 
             do
                 GroupboxHolder = New("Frame", {
-                    BackgroundColor3 = "BackgroundColor",
+                    Name = "PrimeGroupedSurface",
+                    BackgroundTransparency = 0.70,
+                    BackgroundColor3 = "MainColor",
                     Size = UDim2.fromScale(1, 0),
                     Parent = BoxHolder,
                 })
@@ -19326,9 +19651,11 @@ function Library:CreateWindow(WindowInfo)
                     })
                 )
                 New("UIListLayout", {
+                    HorizontalAlignment = Enum.HorizontalAlignment.Center,
                     Parent = GroupboxHolder,
                 })
-                Library:AddOutline(GroupboxHolder)
+                local PrimeBorder = Library:AddOutline(GroupboxHolder)
+                if PrimeBorder then PrimeBorder.Transparency = 0.65 end
 
                 GroupboxTop = New("Frame", {
                     AutomaticSize = Enum.AutomaticSize.Y,
@@ -19356,7 +19683,7 @@ function Library:CreateWindow(WindowInfo)
                     Library:ApplyLucideIcon(GroupboxHeaderIcon, BoxIcon)
                 end
 
-                local RightInset = if Info.DisableCollapsing ~= true then 22 else 0
+                local RightInset = if Info.DisableCollapsing ~= true then 28 else 0
                 local TextsFrame = New("Frame", {
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
@@ -19376,6 +19703,7 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 GroupboxLabel = New("TextLabel", {
+            Name = "PrimeTitle",
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
                     Size = UDim2.fromScale(1, 0),
@@ -19395,8 +19723,8 @@ function Library:CreateWindow(WindowInfo)
                     BackgroundTransparency = 1,
                     Size = UDim2.fromScale(1, 0),
                     Text = Info.Description or "",
-                    TextSize = 14,
-                    TextTransparency = 0.5,
+                    TextSize = 15,
+                    TextTransparency = 0.15,
                     TextWrapped = true,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Visible = (Info.Description ~= nil),
@@ -19409,12 +19737,18 @@ function Library:CreateWindow(WindowInfo)
                     BackgroundTransparency = 1,
                     ImageColor3 = "WhiteColor",
                     Position = UDim2.fromScale(1, 0.5),
-                    Size = UDim2.fromOffset(22, 22),
+                    Name = "PrimeCollapseHit",
+                    Size = UDim2.fromOffset(28, 28),
                     Parent = GroupboxTop,
                 })
                 if ArrowIcon then
                     Library:ApplyLucideIcon(GroupboxCollapseArrow, ArrowIcon, 180)
                 end
+                GroupboxCollapseArrow.ImageTransparency=1
+                New("ImageLabel",{Name="PrimeChevronGlyph",BackgroundTransparency=1,
+                    AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(16,16),
+                    Image=GroupboxCollapseArrow.Image,ImageRectOffset=GroupboxCollapseArrow.ImageRectOffset,
+                    ImageRectSize=GroupboxCollapseArrow.ImageRectSize,ImageColor3="FontColor",Parent=GroupboxCollapseArrow})
 
                 GroupboxLine = Library:MakeLine(GroupboxHolder, {
                     LayoutOrder = 1,
@@ -19422,6 +19756,7 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 GroupboxContainer = New("ScrollingFrame", {
+                    Name = "PrimeCardScroll",
                     AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
@@ -19437,10 +19772,10 @@ function Library:CreateWindow(WindowInfo)
                     Parent = GroupboxContainer,
                 })
                 New("UIPadding", {
-                    PaddingBottom = UDim.new(0, 7),
-                    PaddingLeft = UDim.new(0, 7),
-                    PaddingRight = UDim.new(0, 7),
-                    PaddingTop = UDim.new(0, 7),
+                    PaddingBottom = UDim.new(0, 10),
+                    PaddingLeft = UDim.new(0, 8),
+                    PaddingRight = UDim.new(0, 8),
+                    PaddingTop = UDim.new(0, 10),
                     Parent = GroupboxContainer,
                 })
             end
@@ -19468,26 +19803,42 @@ function Library:CreateWindow(WindowInfo)
             local ResizeTween
             local CollapseArrowTween
             local CollapseClipThread
+            local ResizeGeneration = 0
 
             --// ForceAnimate lets the collapse slide play even when the general
             --// groupbox resize animation is off
             function Groupbox:Resize(ForceAnimate: boolean?)
+                ResizeGeneration += 1
+                local generation = ResizeGeneration
+                if Library.PrimeMotion then Library.PrimeMotion:Cancel(GroupboxHolder) end
                 if ResizeTween then
                     StopTween(ResizeTween, true)
                     ResizeTween = nil
                 end
 
                 local TopSize = (GroupboxTop.AbsoluteSize.Y / Library.DPIScale)
-                local ContainerSize = (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 14
+                local ContainerSize = (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 20
                 if Groupbox.PoppedOut then
                     ContainerSize = math.min(ContainerSize, GetPopOutBodyMaxHeight(Groupbox, TopSize + 1))
                 end
 
                 local TargetSize = UDim2.new(1, 0, 0, if Groupbox.Collapsed then TopSize else (TopSize + 1 + ContainerSize))
-                GroupboxContainer.Size = UDim2.new(1, 0, 0, ContainerSize)
+                GroupboxContainer.Size = UDim2.new(1, -8, 0, ContainerSize)
                 GroupboxLine.Visible = not Groupbox.Collapsed
 
-                if ForceAnimate == true or (Library.Animations and Library.Animations.Groupbox) then
+                if Library.PrimeMotion then
+                    local function finish()
+                        if Groupbox.Destroyed or generation ~= ResizeGeneration then return end
+                        GroupboxHolder.ClipsDescendants = false
+                        GroupboxContainer.Visible = not Groupbox.Collapsed
+                    end
+                    if not Library.ReducedMotion and (ForceAnimate == true or (Library.Animations and Library.Animations.Groupbox)) then
+                        Library.PrimeMotion:To(GroupboxHolder, {Size=TargetSize}, 32, 1, finish)
+                    else
+                        GroupboxHolder.Size=TargetSize
+                        finish()
+                    end
+                elseif not Library.ReducedMotion and (ForceAnimate == true or (Library.Animations and Library.Animations.Groupbox)) then
                     local TweenInfo = Library.GroupboxTweenInfo or TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
                     local Tween = TweenService:Create(GroupboxHolder, TweenInfo, { Size = TargetSize })
                     ResizeTween = Tween
@@ -19534,11 +19885,12 @@ function Library:CreateWindow(WindowInfo)
                 end
 
                 local TargetRotation = if Collapsed then 0 else 180
+                if Library.PrimeMotion then Library.PrimeMotion:Cancel(GroupboxCollapseArrow) end
 
                 --// Slide the card open/shut instead of snapping. The body stays
                 --// parented and visible for the whole slide, with the holder
                 --// clipping it, so the contents wipe away behind the edge.
-                local AnimateCollapse = (Library.Animations == nil) or (Library.Animations.GroupboxCollapse ~= false)
+                local AnimateCollapse = not Library.ReducedMotion and ((Library.Animations == nil) or (Library.Animations.GroupboxCollapse ~= false))
                 if CollapseClipThread then
                     task.cancel(CollapseClipThread)
                     CollapseClipThread = nil
@@ -19551,7 +19903,9 @@ function Library:CreateWindow(WindowInfo)
                     GroupboxContainer.Visible = not Collapsed
                 end
 
-                if AnimateCollapse then
+                if AnimateCollapse and Library.PrimeMotion then
+                    Library.PrimeMotion:To(GroupboxCollapseArrow,{Rotation=TargetRotation},32,1)
+                elseif AnimateCollapse then
                     local TweenInfo = Library.RotatingChevronTweenInfo or TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
                     local Tween = TweenService:Create(GroupboxCollapseArrow, TweenInfo, { Rotation = TargetRotation })
                     CollapseArrowTween = Tween
@@ -19574,7 +19928,7 @@ function Library:CreateWindow(WindowInfo)
 
                 Groupbox:Resize(AnimateCollapse)
 
-                if AnimateCollapse then
+                if AnimateCollapse and not Library.PrimeMotion then
                     --// Restore clipping/visibility once the slide has landed, so
                     --// pop-outs and overflowing menus behave normally again
                     local SlideInfo = Library.GroupboxTweenInfo or TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -19691,7 +20045,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             if Info.DisableCollapsing ~= true then
-                GroupboxCollapseArrow.MouseButton1Click:Connect(function()
+                Library:OnActivate(GroupboxCollapseArrow, function()
                     Groupbox:ToggleCollapsed()
                 end)
             end
@@ -19784,7 +20138,9 @@ function Library:CreateWindow(WindowInfo)
             if TabChevron then
                 local Rotation = Open and 180 or 0
 
-                if Animated then
+                if Library.PrimeMotion then
+                    Library.PrimeMotion:To(TabChevron,{Rotation=Rotation},30,1)
+                elseif Animated and not Library.ReducedMotion then
                     TweenService:Create(TabChevron, Library.RotatingChevronTweenInfo, {
                         Rotation = Rotation,
                     }):Play()
@@ -19796,6 +20152,7 @@ function Library:CreateWindow(WindowInfo)
 
         --// Built on the first AddSubTab, so tabs without sub tabs stay untouched
         local function EnsureSidebarList()
+            if not WindowInfo.SidebarSubTabs then return end
             if SidebarList then
                 return
             end
@@ -19824,16 +20181,21 @@ function Library:CreateWindow(WindowInfo)
                 ImageRectSize = ChevronIcon and ChevronIcon.ImageRectSize or Vector2.zero,
                 ImageTransparency = 0.5,
                 Position = UDim2.new(1, 0, 0.5, 0),
-                Size = UDim2.fromOffset(16, 16),
+                Size = UDim2.fromOffset(28, 28),
                 Visible = not IsCompact,
                 ZIndex = 3,
                 Parent = TabButton,
             })
 
+            TabChevron.ImageTransparency=1
+            New("ImageLabel",{Name="PrimeChevronGlyph",BackgroundTransparency=1,
+                AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(16,16),
+                Image=TabChevron.Image,ImageRectOffset=TabChevron.ImageRectOffset,
+                ImageRectSize=TabChevron.ImageRectSize,ImageColor3="FontColor",ImageTransparency=.3,Parent=TabChevron})
             --// Give the chevron room so a long tab name cannot run under it
-            TabLabel.Size = UDim2.new(1, -30 - 18, 1, 0)
+            TabLabel.Size = UDim2.new(1, -30 - 30, 1, 0)
 
-            TabChevron.MouseButton1Click:Connect(function()
+            Library:OnActivate(TabChevron, function()
                 Tab:SetExpanded(not Expanded)
             end)
 
@@ -19920,7 +20282,7 @@ function Library:CreateWindow(WindowInfo)
                 Position = UDim2.fromOffset(TextOffset, 0),
                 Size = UDim2.new(1, -TextOffset - 10, 1, 0),
                 Text = SubName,
-                TextSize = 14,
+                TextSize = 15,
                 TextTransparency = SUBTAB_IDLE_TRANSPARENCY,
                 TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
@@ -20010,7 +20372,7 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end)
 
-            Entry.MouseButton1Click:Connect(function()
+            Library:OnActivate(Entry, function()
                 --// Selecting a sub tab implies opening the tab that owns it
                 if Library.ActiveTab ~= Tab then
                     Tab:Show()
@@ -20056,7 +20418,7 @@ function Library:CreateWindow(WindowInfo)
         local SubTabUnderline
         local SubTabUnderlineTween
         local SubTabUnderlineSettling = false
-        local SubTabAlignment = "Center"
+        local SubTabAlignment = "Left"
         --// Declared up here so CreateSubTabBar below can reach it
         local MoveSubTabUnderline
 
@@ -20066,30 +20428,72 @@ function Library:CreateWindow(WindowInfo)
             end
 
             SubTabBar = New("Frame", {
+                Name = "PrimeSubcategoryBar",
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, -4, 0, SUBTAB_BAR_HEIGHT),
                 Position = UDim2.fromOffset(2, 0),
                 ZIndex = 2,
                 Parent = TabContainer,
             })
+            local Recess = New("Frame", {
+                Name="PrimeRecess", BackgroundColor3="BackgroundColor", BorderSizePixel=0,
+                AnchorPoint=Vector2.new(.5,.5), Position=UDim2.fromScale(.5,.5),
+                Size=UDim2.fromOffset(0,SUBTAB_BAR_HEIGHT), ZIndex=1, Parent=SubTabBar,
+            })
+            New("UICorner",{CornerRadius=UDim.new(0,999),Parent=Recess})
+            New("UIStroke",{Color="FontColor",Transparency=.92,Thickness=1,Parent=Recess})
             --// The buttons get their own frame: a UIListLayout lays out every child,
             --// so the underline cannot live alongside them without being laid out too
-            SubTabButtons = New("Frame", {
+            SubTabButtons = New("ScrollingFrame", {
+                Name = "PrimeSubcategoryViewport", Active=true,
+                BorderSizePixel = 0,
+                CanvasSize = UDim2.fromScale(0,0), AutomaticCanvasSize=Enum.AutomaticSize.X,
+                ScrollingDirection=Enum.ScrollingDirection.X, ScrollBarThickness=3,
+                Position=UDim2.fromOffset(0,0),
                 BackgroundTransparency = 1,
-                Size = UDim2.fromScale(1, 1),
-                Parent = SubTabBar,
+                Size = UDim2.fromScale(1,1),
+                ZIndex = 2,
+                Parent = Recess,
             })
+            -- Keep the outline inside the scroll clip, including the first/last chip.
+            New("UIPadding", {PaddingLeft=UDim.new(0,4), PaddingRight=UDim.new(0,4), Parent=SubTabButtons})
             SubTabBarLayout = New("UIListLayout", {
                 FillDirection = Enum.FillDirection.Horizontal,
-                HorizontalAlignment = Enum.HorizontalAlignment[SubTabAlignment],
+                HorizontalAlignment = Enum.HorizontalAlignment.Left,
                 VerticalAlignment = Enum.VerticalAlignment.Center,
                 Padding = UDim.new(0, 6),
                 Parent = SubTabButtons,
             })
+            local function ResizeRecess()
+                if not SubTabBar.Parent then return end
+                local items={}
+                local available=math.max(0,SubTabBar.AbsoluteSize.X/Library.DPIScale-8)
+                for _,item in ipairs(SubTabButtons:GetChildren()) do
+                    if item:IsA("GuiButton") and item.Visible then table.insert(items,item) end
+                end
+                local cap=math.max(64,math.floor((available-math.max(0,#items-1)*6)/math.max(1,#items)))
+                local width=0
+                for _,item in ipairs(items) do
+                    local natural=item:GetAttribute("PrimeNaturalWidth") or item.Size.X.Offset
+                    local size=math.min(natural,cap)
+                    item.Size=UDim2.fromOffset(size,SUBTAB_BAR_HEIGHT-8)
+                    width+=size
+                end
+                width+=math.max(0,#items-1)*6
+                local x=SubTabAlignment=="Left" and 0 or SubTabAlignment=="Right" and 1 or .5
+                Recess.AnchorPoint=Vector2.new(x,.5)
+                Recess.Position=UDim2.fromScale(x,.5)
+                Recess.Size=UDim2.fromOffset(math.min(available,width)+8,SUBTAB_BAR_HEIGHT)
+            end
+            table.insert(Tab.Connections,SubTabButtons.ChildAdded:Connect(function() task.defer(ResizeRecess) end))
+            table.insert(Tab.Connections,SubTabButtons.ChildRemoved:Connect(ResizeRecess))
+            table.insert(Tab.Connections,SubTabBar:GetAttributeChangedSignal("Alignment"):Connect(ResizeRecess))
+            table.insert(Tab.Connections,SubTabBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(ResizeRecess))
 
             --// A single bar shared by every sub tab, so it can slide between them.
             --// Accent in the middle fading out at both ends, rather than a hard rule.
             SubTabUnderline = New("Frame", {
+                Name = "PrimeLegacySubTabUnderline",
                 AnchorPoint = Vector2.new(0, 1),
                 BackgroundColor3 = "AccentColor",
                 BorderSizePixel = 0,
@@ -20139,6 +20543,7 @@ function Library:CreateWindow(WindowInfo)
 
         --// Slides the shared bar under Button; snaps when nothing was active yet
         function MoveSubTabUnderline(Button: GuiObject)
+            if not WindowInfo.SubTabUnderline then return end
             if not SubTabUnderline then
                 return
             end
@@ -20247,7 +20652,7 @@ function Library:CreateWindow(WindowInfo)
 
             SubTabAlignment = Alignment
             if SubTabBarLayout then
-                SubTabBarLayout.HorizontalAlignment = Enum.HorizontalAlignment[Alignment]
+                SubTabBar:SetAttribute("Alignment", Alignment)
             end
         end
 
@@ -20257,7 +20662,7 @@ function Library:CreateWindow(WindowInfo)
 
             if SubTabBar and SubTabBar.Visible then
                 SubTabBar.Position = UDim2.new(0, 2, 0, Offset)
-                Offset += SUBTAB_BAR_HEIGHT + 6
+                Offset += SUBTAB_BAR_HEIGHT + 10
             end
 
             return Offset
@@ -20336,10 +20741,13 @@ function Library:CreateWindow(WindowInfo)
             --// of the thing it falls behind.
             local Button = New("TextButton", {
                 BackgroundTransparency = 1,
+                Name = "PrimeSubcategoryButton",
                 Size = UDim2.fromOffset(TextWidth + IconWidth + 24, SUBTAB_BAR_HEIGHT - 8),
                 Text = "",
                 Parent = SubTabButtons,
             })
+            Button:SetAttribute("ImperiumRadius",999)
+            Button:SetAttribute("PrimeNaturalWidth",TextWidth+IconWidth+24)
 
             --// Everything visible lives in here so hover can scale it as one piece,
             --// while the button keeps its size and the row never reflows
@@ -20380,6 +20788,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             local Chip = New("Frame", {
+                Name = "PrimeSegment",
                 --// Lighter than MainColor so the active chip separates from the tab
                 BackgroundColor3 = function()
                     return Library:GetBetterColor(Library.Scheme.MainColor, 10)
@@ -20392,7 +20801,7 @@ function Library:CreateWindow(WindowInfo)
             table.insert(
                 Library.Corners,
                 New("UICorner", {
-                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+                    CornerRadius = UDim.new(0, 999),
                     Parent = Chip,
                 })
             )
@@ -20433,7 +20842,8 @@ function Library:CreateWindow(WindowInfo)
 
             local ButtonLabel = New("TextLabel", {
                 BackgroundTransparency = 1,
-                Size = UDim2.fromOffset(TextWidth, 16),
+                Size = UDim2.new(1,-IconWidth-24,0,16),
+                TextTruncate = Enum.TextTruncate.AtEnd,
                 Text = SubName,
                 TextSize = 15,
                 TextTransparency = SUBTAB_IDLE_TRANSPARENCY,
@@ -20480,7 +20890,7 @@ function Library:CreateWindow(WindowInfo)
                 New("UIPadding", {
                     PaddingBottom = UDim.new(0, 2),
                     PaddingLeft = UDim.new(0, 2),
-                    PaddingRight = UDim.new(0, 2),
+                    PaddingRight = UDim.new(0, 8),
                     PaddingTop = UDim.new(0, 2),
                     Parent = Side,
                 })
@@ -20543,25 +20953,22 @@ function Library:CreateWindow(WindowInfo)
             end
 
             function SubTab:Hover(Hovering)
-                --// The squash applies to the active sub tab too: hovering the chip you
-                --// are already on should still respond
-                TweenService:Create(ButtonScale, SUBTAB_HOVER_TWEEN, {
-                    Scale = Hovering and SUBTAB_HOVER_SCALE or 1,
-                }):Play()
+                -- Keep label geometry stable; illumination supplies hover feedback.
+                ButtonScale.Scale = 1
 
                 if Tab.ActiveSubTab == SubTab then
                     return
                 end
 
                 TweenService:Create(Chip, Library.TweenInfo, {
-                    BackgroundTransparency = Hovering and 0.45 or 1,
+                    BackgroundTransparency = 1,
                 }):Play()
                 TweenService:Create(ButtonStroke, Library.TweenInfo, {
-                    Transparency = Hovering and 0.7 or 1,
+                    Transparency = 1,
                 }):Play()
                 for Index, Shadow in ButtonShadows do
                     TweenService:Create(Shadow, Library.TweenInfo, {
-                        BackgroundTransparency = Hovering and SUBTAB_SHADOW_TRANSPARENCY[Index] + 0.2 or 1,
+                        BackgroundTransparency = 1,
                     }):Play()
                 end
                 TweenService:Create(ButtonLabel, Library.TweenInfo, {
@@ -20611,6 +21018,16 @@ function Library:CreateWindow(WindowInfo)
 
                 --// Set before moving the bar: a deferred move re-checks it
                 Tab.ActiveSubTab = SubTab
+                task.defer(function()
+                    if Library.Unloaded or SubTab.Destroyed or Tab.ActiveSubTab ~= SubTab then return end
+                    local viewport=SubTabButtons
+                    local gutter=4*Library.DPIScale
+                    local left=Button.AbsolutePosition.X-viewport.AbsolutePosition.X-gutter
+                    local right=Button.AbsolutePosition.X+Button.AbsoluteSize.X-viewport.AbsolutePosition.X-viewport.AbsoluteSize.X+gutter
+                    if left<0 or right>0 then
+                        viewport.CanvasPosition=Vector2.new(math.max(0,viewport.CanvasPosition.X+(left<0 and left or right)),0)
+                    end
+                end)
                 MoveSubTabUnderline(Button)
 
                 SubTab:RefreshSides()
@@ -20740,7 +21157,7 @@ function Library:CreateWindow(WindowInfo)
             Button.MouseLeave:Connect(function()
                 SubTab:Hover(false)
             end)
-            Button.MouseButton1Click:Connect(function()
+            Library:OnActivate(Button, function()
                 SubTab:Show()
             end)
 
@@ -20766,7 +21183,7 @@ function Library:CreateWindow(WindowInfo)
             --// The well carries the hover now, so the glyph and label only have to
             --// come the rest of the way up to full rather than do the work alone
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = Hovering and 0.1 or 0.5,
+                TextTransparency = Hovering and 0.1 or 0.15,
             }):Play()
             if TabIcon then
                 TweenService:Create(TabIcon, Library.TweenInfo, {
@@ -20827,7 +21244,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = 0.5,
+                TextTransparency = 0.15,
             }):Play()
 
             if TabIcon then
@@ -20954,7 +21371,7 @@ function Library:CreateWindow(WindowInfo)
         --// Clicking the tab that is already open collapses its sub tab list, and
         --// expands it again. Tab:Show early returns on the open tab, so without this
         --// the row is dead once you are on it and only the small chevron closes it
-        TabButton.MouseButton1Click:Connect(function()
+        Library:OnActivate(TabButton, function()
             if Library.ActiveTab == Tab and next(Tab.SubTabs) ~= nil then
                 Tab:ToggleExpanded()
                 return
@@ -21047,12 +21464,15 @@ function Library:CreateWindow(WindowInfo)
             })
 
             TabLabel = New("TextLabel", {
+                Name = "PrimeSidebarLabel",
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextWrapped = false,
                 BackgroundTransparency = 1,
                 Position = UDim2.fromOffset(30, 0),
                 Size = UDim2.new(1, -30, 1, 0),
                 Text = Name,
                 TextSize = 16,
-                TextTransparency = 0.5,
+                TextTransparency = 0.15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = not IsCompact,
                 Parent = ButtonHolder,
@@ -21130,7 +21550,7 @@ function Library:CreateWindow(WindowInfo)
                 BackgroundColor3 = "MainColor",
                 PlaceholderText = "Key",
                 Size = UDim2.new(1, -71, 1, 0),
-                TextSize = 14,
+                TextSize = 15,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Holder,
             })
@@ -21171,8 +21591,8 @@ function Library:CreateWindow(WindowInfo)
                 Position = UDim2.fromScale(1, 0),
                 Size = UDim2.new(0, 63, 1, 0),
                 Text = "Execute",
-                TextSize = 14,
-                TextTransparency = 0.4,
+                TextSize = 15,
+                TextTransparency = 0.15,
                 Parent = Holder,
             })
             New("UIStroke", {
@@ -21195,7 +21615,7 @@ function Library:CreateWindow(WindowInfo)
 
             Button.MouseLeave:Connect(function()
                 TweenService:Create(Button, Library.TweenInfo, {
-                    TextTransparency = 0.4,
+                    TextTransparency = 0.15,
                 }):Play()
             end)
 
@@ -21248,7 +21668,7 @@ function Library:CreateWindow(WindowInfo)
             --// The well carries the hover now, so the glyph and label only have to
             --// come the rest of the way up to full rather than do the work alone
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = Hovering and 0.1 or 0.5,
+                TextTransparency = Hovering and 0.1 or 0.15,
             }):Play()
             if TabIcon then
                 TweenService:Create(TabIcon, Library.TweenInfo, {
@@ -21308,7 +21728,7 @@ function Library:CreateWindow(WindowInfo)
             end
 
             TweenService:Create(TabLabel, Library.TweenInfo, {
-                TextTransparency = 0.5,
+                TextTransparency = 0.15,
             }):Play()
 
             if TabIcon then
@@ -21360,7 +21780,7 @@ function Library:CreateWindow(WindowInfo)
         TabButton.MouseLeave:Connect(function()
             Tab:Hover(false)
         end)
-        TabButton.MouseButton1Click:Connect(Tab.Show)
+        Library:OnActivate(TabButton, Tab.Show)
 
         Tab.Container = TabContainer
         setmetatable(Tab, BaseGroupbox)
@@ -21491,6 +21911,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local TitleLabel = New("TextLabel", {
+            Name = "PrimeTitle",
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 18),
             AutomaticSize = Enum.AutomaticSize.Y,
@@ -21508,7 +21929,7 @@ function Library:CreateWindow(WindowInfo)
             Size = UDim2.new(1, 0, 0, 14),
             AutomaticSize = Enum.AutomaticSize.Y,
             Text = Info.Description,
-            TextSize = 14,
+            TextSize = 15,
             TextTransparency = Info.DescriptionColor and 0 or 0.2,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextColor3 = Info.DescriptionColor or "FontColor",
@@ -21651,7 +22072,7 @@ function Library:CreateWindow(WindowInfo)
             Library.Dialogues[Idx] = nil
         end
 
-        DialogOverlay.MouseButton1Click:Connect(function()
+        Library:OnActivate(DialogOverlay, function()
             if Info.OutsideClickDismiss then
                 Dialog:Dismiss()
             end
@@ -21744,8 +22165,8 @@ function Library:CreateWindow(WindowInfo)
                 Size = UDim2.fromScale(1, 1),
                 Text = ButtonInfo.Title or ButtonIdx,
                 TextColor3 = TextColor,
-                TextTransparency = WaitTime > 0 and 0.5 or 0,
-                TextSize = 14,
+                TextTransparency = WaitTime > 0 and 0.15 or 0,
+                TextSize = 15,
                 ZIndex = 2,
                 Parent = TextBtn,
             })
@@ -21781,7 +22202,7 @@ function Library:CreateWindow(WindowInfo)
                     IsActive = not Disabled
                     if Disabled then
                         TweenService:Create(TextBtn, Library.TweenInfo, { BackgroundTransparency = 0.5 }):Play()
-                        TweenService:Create(BtnLabel, Library.TweenInfo, { TextTransparency = 0.5 }):Play()
+                        TweenService:Create(BtnLabel, Library.TweenInfo, { TextTransparency = 0.15 }):Play()
                     else
                         TweenService:Create(TextBtn, Library.TweenInfo, { BackgroundTransparency = 0 }):Play()
                         TweenService:Create(BtnLabel, Library.TweenInfo, { TextTransparency = 0 }):Play()
@@ -21805,7 +22226,7 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end)
 
-            TextBtn.MouseButton1Click:Connect(function()
+            Library:OnActivate(TextBtn, function()
                 if not IsActive then return end
                 if ButtonInfo.Callback then
                     ButtonInfo.Callback(Dialog)
@@ -22179,6 +22600,9 @@ function Library:CreateWindow(WindowInfo)
         Library.IsRobloxFocused = false
     end))
 
+    Window.MiniFrame = MiniFrame
+    Window.MinimizedBody = MiniBody
+    Window.MinimizedSubtitleLabel = MiniSubtitle
     Window.MainFrame = MainFrame
     Library.Window = Window
 
@@ -22355,6 +22779,7 @@ function Library:CreateLoading(LoadingInfo)
         (TitleHolder.AbsoluteSize.X / Library.DPIScale) - (LoadingInfo.Icon and (LoadingInfo.IconSize.X.Offset + 6) or 0) - 12
     )
     local _WindowTitle = New("TextLabel", {
+            Name = "PrimeTitle",
         BackgroundTransparency = 1,
         Size = UDim2.new(0, TitleX, 1, 0),
         Text = LoadingInfo.Title,
@@ -22430,8 +22855,8 @@ function Library:CreateLoading(LoadingInfo)
         AutomaticSize = Loading.AutoResizeHeight and Enum.AutomaticSize.Y or Enum.AutomaticSize.XY,
         Size = Loading.AutoResizeHeight and UDim2.new(1, -60, 0, 0) or UDim2.fromOffset(0, 0),
         Text = "",
-        TextSize = 14,
-        TextTransparency = 0.5,
+        TextSize = 15,
+        TextTransparency = 0.15,
         TextWrapped = Loading.AutoResizeHeight,
         Parent = InnerContent,
     })
@@ -22457,7 +22882,7 @@ function Library:CreateLoading(LoadingInfo)
         BackgroundTransparency = 1,
         Size = UDim2.fromScale(1, 1),
         Text = "",
-        TextSize = 14,
+        TextSize = 15,
         ZIndex = 2,
         Parent = SliderBar,
     })
@@ -22544,7 +22969,7 @@ function Library:CreateLoading(LoadingInfo)
         Position = UDim2.fromOffset(15, 39),
         Size = UDim2.new(1, -30, 1, -90),
         Text = "Error Message",
-        TextSize = 14,
+        TextSize = 15,
         TextTransparency = 0.2,
         TextWrapped = true,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -22826,7 +23251,7 @@ function Library:CreateLoading(LoadingInfo)
                 Size = UDim2.fromScale(1, 1),
                 Text = ButtonInfo.Title or Idx,
                 TextColor3 = TextColor,
-                TextSize = 14,
+                TextSize = 15,
                 Parent = TextBtn,
             })
 
@@ -22848,7 +23273,7 @@ function Library:CreateLoading(LoadingInfo)
                 }):Play()
             end)
 
-            TextBtn.MouseButton1Click:Connect(function()
+            Library:OnActivate(TextBtn, function()
                 if ButtonInfo.Callback then
                     ButtonInfo.Callback(Loading)
                 end
