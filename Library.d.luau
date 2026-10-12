@@ -1296,6 +1296,8 @@ export type Loading = {
 
 export type DialogButtonInfo = {
     Title: string,
+    Side: ("Left" | "Right")?,
+    AutoDismiss: boolean?,
     Variant: "Primary" | "Secondary" | "Destructive" | "Ghost"?,
     WaitTime: number?,
     Order: number?,

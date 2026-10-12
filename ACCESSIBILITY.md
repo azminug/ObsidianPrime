@@ -115,3 +115,14 @@ motion is enabled. Keyboard activation remains available; Ctrl+M is a mouse-hove
 hint, not a permanently displayed extra control. Lifecycle mocks and live fixture
 checks cover restore, repeated activation, motion, hidden state and metrics bounds.
 Physical touch and complete assistive-technology behavior remain unverified.
+
+## 0.16 compact status island and browser footer
+
+The capsule retains a 44px pointer target, 16px metrics, numeric active-feature
+count and keyboard restore. Hover adds a 30px hint row below without changing
+width; all actions remain available without hover. Reduced Motion stops the
+mascot and applies window transitions immediately. Live tests cover rapid
+minimize/restore reversal, hidden state, geometry and native minimized labels.
+Physical mouse outside cancellation discards drafts without invoking Apply.
+Full keyboard, touch hardware, assistive technology and bright-backdrop contrast
+coverage remain unverified; no WCAG conformance claim is made.

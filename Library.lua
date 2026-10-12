@@ -21960,10 +21960,10 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 1),
             Text = "",
-            Active = false,
+            Active = true,
             ZIndex = 9000,
             Visible = true,
-            Parent = MainFrame,
+            Parent = ScreenGui,
         })
         TweenService:Create(DialogOverlay, Library.TweenInfo, {
             BackgroundTransparency = 0.5,
@@ -21998,11 +21998,11 @@ function Library:CreateWindow(WindowInfo)
             Parent = DialogFrame,
         })
         local DialogScale = New("UIScale", {
-            Scale = 0.95,
+            Scale = Library.DPIScale * .95,
             Parent = DialogFrame,
         })
         TweenService:Create(DialogScale, Library.TweenInfo, {
-            Scale = 1
+            Scale = Library.DPIScale
         }):Play()
         local _InnerPadding = New("UIPadding", {
             PaddingBottom = UDim.new(0, 15),
@@ -22131,27 +22131,27 @@ function Library:CreateWindow(WindowInfo)
             ZIndex = 2,
             Parent = InnerContainer,
         })
-        New("UIListLayout", {
-            Padding = UDim.new(0, 8),
-            FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Right,
-            Wraps = true,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = ButtonsHolder,
-        })
-        New("UIPadding", {
-            PaddingTop = UDim.new(0, 5),
-            Parent = ButtonsHolder,
-        })
+        local FooterLeft=New("Frame",{Name="PrimeDialogFooterLeft",BackgroundTransparency=1,
+            Size=UDim2.new(.5,-4,0,0),AutomaticSize=Enum.AutomaticSize.Y,Parent=ButtonsHolder})
+        local FooterRight=New("Frame",{Name="PrimeDialogFooterRight",BackgroundTransparency=1,
+            Position=UDim2.new(.5,4,0,0),Size=UDim2.new(.5,-4,0,0),AutomaticSize=Enum.AutomaticSize.Y,Parent=ButtonsHolder})
+        for _,group in ipairs({FooterLeft,FooterRight}) do
+            New("UIListLayout",{Padding=UDim.new(0,8),FillDirection=Enum.FillDirection.Horizontal,
+                HorizontalAlignment=group==FooterLeft and Enum.HorizontalAlignment.Left or Enum.HorizontalAlignment.Right,
+                Wraps=true,SortOrder=Enum.SortOrder.LayoutOrder,Parent=group})
+        end
 
         local Dialog = {
             Destroyed = false,
             Elements = {},
             Container = DialogContainer,
+            FooterLeft=FooterLeft, FooterRight=FooterRight, Overlay=DialogOverlay, Frame=DialogFrame,
             OutsideClickDismiss = Info.OutsideClickDismiss,
         }
 
         function Dialog:Resize()
+            local center=MainFrame.AbsolutePosition+MainFrame.AbsoluteSize/2-ScreenGui.AbsolutePosition
+            DialogFrame.Position=UDim2.fromOffset(center.X,center.Y)
             local MaxWidth = (MainFrame.AbsoluteSize.X / Library.DPIScale) * 0.75
             local MinWidth = math.min(Info.Width or 400, MaxWidth)
 
@@ -22185,6 +22185,10 @@ function Library:CreateWindow(WindowInfo)
             end
             DialogContainer.Visible = HasElements
 
+            local hasLeft=#FooterLeft:GetChildren()>1
+            FooterLeft.Visible=hasLeft
+            FooterRight.Position=UDim2.new(hasLeft and .5 or 0,hasLeft and 4 or 0,0,0)
+            FooterRight.Size=UDim2.new(hasLeft and .5 or 1,hasLeft and -4 or 0,0,0)
             ButtonsHolder.Visible = HasButtons
             _Sep2.Visible = HasButtons
         end
@@ -22199,12 +22203,18 @@ function Library:CreateWindow(WindowInfo)
             Dialog:Resize()
         end
 
+        local outsideConnection
+        local visibilityConnection=MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+            DialogOverlay.Visible=MainFrame.Visible and Library.Toggled
+        end)
+        DialogOverlay.Destroying:Once(function() visibilityConnection:Disconnect() end)
         function Dialog:Dismiss(Immediate: boolean?)
             if Dialog.Destroyed then
                 return
             end
 
             Dialog.Destroyed = true
+            if outsideConnection then outsideConnection:Disconnect();outsideConnection=nil end
 
             if Library.ActiveDialog == Dialog then
                 Library.ActiveDialog = nil
@@ -22223,7 +22233,7 @@ function Library:CreateWindow(WindowInfo)
                 Library.Dialogues[Idx]=nil
                 return
             end
-            local CloseTween = TweenService:Create(DialogScale, Library.TweenInfo, { Scale = 0.95 })
+            local CloseTween = TweenService:Create(DialogScale, Library.TweenInfo, { Scale = Library.DPIScale * .95 })
             TweenService:Create(DialogOverlay, Library.TweenInfo, { BackgroundTransparency = 1 }):Play()
             CloseTween:Play()
 
@@ -22238,6 +22248,19 @@ function Library:CreateWindow(WindowInfo)
                 Dialog:Dismiss(Info.InstantOutsideDismiss)
             end
         end)
+
+        -- Screen coordinates cover taps outside MainFrame as well as its dimmed overlay.
+        if Info.OutsideClickDismiss then
+            outsideConnection=UserInputService.InputBegan:Connect(function(input)
+                if Library.ActiveDialog~=Dialog or Dialog.Destroyed or not MainFrame.Visible then return end
+                if input.UserInputType~=Enum.UserInputType.MouseButton1 and input.UserInputType~=Enum.UserInputType.Touch then return end
+                local point=Vector2.new(input.Position.X,input.Position.Y)
+                if not ScreenGui.IgnoreGuiInset then point-=GuiService:GetGuiInset() end
+                local p,size=DialogFrame.AbsolutePosition,DialogFrame.AbsoluteSize
+                if point.X<p.X or point.Y<p.Y or point.X>p.X+size.X or point.Y>p.Y+size.Y then Dialog:Dismiss(true) end
+            end)
+            DialogOverlay.Destroying:Once(function() if outsideConnection then outsideConnection:Disconnect();outsideConnection=nil end end)
+        end
 
         function Dialog:RemoveFooterButton(ButtonIdx)
             if FooterButtonsList[ButtonIdx] then
@@ -22265,10 +22288,10 @@ function Library:CreateWindow(WindowInfo)
 
             local ButtonContainer = New("Frame", {
                 BackgroundTransparency = 1,
-                Size = UDim2.fromOffset(0, 26),
+                Size = UDim2.fromOffset(0, 32),
                 LayoutOrder = ButtonInfo.Order or 0,
                 ZIndex = 2,
-                Parent = ButtonsHolder,
+                Parent = ButtonInfo.Side=="Left" and FooterLeft or FooterRight,
             })
 
             local BtnColor = "MainColor"
@@ -22293,7 +22316,7 @@ function Library:CreateWindow(WindowInfo)
                 BackgroundColor3 = BtnColor,
                 BorderColor3 = BtnOutline,
                 BackgroundTransparency = WaitTime > 0 and 0.5 or 0,
-                Size = UDim2.fromOffset(0, 26),
+                Size = UDim2.fromOffset(0, 32),
                 Text = "",
                 AutoButtonColor = false,
                 ZIndex = 2,
@@ -22392,7 +22415,7 @@ function Library:CreateWindow(WindowInfo)
                 if ButtonInfo.Callback then
                     ButtonInfo.Callback(Dialog)
                 end
-                if Info.AutoDismiss then
+                if Info.AutoDismiss and ButtonInfo.AutoDismiss~=false then
                     Dialog:Dismiss()
                 end
             end)

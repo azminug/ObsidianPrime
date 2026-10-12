@@ -13,7 +13,7 @@ Local development copy of ObsidianUltra for the Imperium script UI.
 - Fork remote: `origin`
 
 The baseline tag preserves the original source. LICENSE and attribution are retained.
-Version 0.15 is published on `main` and the integration tag `imperium-v0.15.0`.
+Version 0.16 is published on `main` and the integration tag `imperium-v0.16.0`.
 Use the tag for application integrations; `imperium-ui` retains the development branch.
 
 ## Development files
@@ -40,7 +40,7 @@ This copy is a development baseline, not an offline/self-contained distribution.
 
 `addons/Motion.lua` provides cancellable damped springs. `addons/Cosmic.lua` installs material, capsule, focus, and lifecycle behavior. `addons/Acrylic.lua` owns camera-local blur/glass effects. `GroupFade = true` opts the window into a CanvasGroup for whole-window fades; existing callers retain the original root class unless they request it.
 
-`tools/build-preview.py` creates the ignored standalone source bundle for Potassium. The latest 0.15 preview targets the explicitly selected PID 26184; the earlier 0.4 preview used PID 13276. The same library and addons are available in the integration tag.
+`tools/build-preview.py` creates the ignored standalone source bundle for Potassium. The latest 0.16 preview targets the explicitly selected PID 24308; the earlier 0.4 preview used PID 13276. The same library and addons are available in the integration tag.
 
 ## Complete workbench (0.4)
 

@@ -1,3 +1,11 @@
+## Imperium 0.16 · 2026-10-12
+
+- Compact status island groups logo, an original native pixel cat, 16px metrics and active automation badge. Its width fits telemetry text; hover keeps that width and reveals a 30px lower hint row.
+- Bounded mascot spring animation follows telemetry, stops when hidden, and respects Reduced Motion. No remote mascot assets or independent animation loop.
+- Restore/minimize scales and fades the window from/to the capsule position, with rapid reversal handling and a separate top-center startup location.
+- Item browser bulk selection moves to the left footer, with Cancel/Apply at right. Screen-wide modal backdrop supports immediate outside cancellation without applying drafts.
+- Keep original controls, configuration and callbacks; application integrations pin `imperium-v0.16.0`.
+
 ## Imperium 0.15 · 2026-10-11
 
 - Streamline the status capsule to logo, live heartbeat and FPS/ping, using the menu font family and theme registry.

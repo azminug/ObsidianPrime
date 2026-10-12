@@ -116,7 +116,7 @@ function Interface.new(Library, Window)
             ScrollingDirection=Enum.ScrollingDirection.X})
         make("UIListLayout",categories,{FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,8),SortOrder=Enum.SortOrder.LayoutOrder})
         local list=make("ScrollingFrame",root,{Name="Items",BackgroundTransparency=1,Position=UDim2.fromOffset(0,94),
-            Size=UDim2.new(.48,-6,1,-138),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=3})
+            Size=UDim2.new(.48,-6,1,-94),CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=3})
         make("UIListLayout",list,{Padding=UDim.new(0,6),SortOrder=Enum.SortOrder.LayoutOrder})
         make("UIPadding",list,{PaddingTop=UDim.new(0,2),PaddingLeft=UDim.new(0,2),PaddingRight=UDim.new(0,8),PaddingBottom=UDim.new(0,8)})
         local detail=make("ScrollingFrame",root,{Name="Detail",BackgroundColor3=Color3.fromRGB(43,40,53),
@@ -235,9 +235,10 @@ function Interface.new(Library, Window)
             drag=nil;list.ScrollingEnabled=true
             task.delay(.2,function() table.clear(suppress) end)
         end)
-        local actions=make("Frame",root,{BackgroundTransparency=1,Position=UDim2.new(0,0,1,-36),Size=UDim2.new(.48,-6,0,36)})
-        local selectAll=button(actions,"Select shown",{Size=UDim2.new(.5,-3,1,0)},function() for id,row in pairs(rows) do if row.Visible then draft[id]=true end end;paint() end)
-        local clearAll=button(actions,"Clear shown",{Position=UDim2.new(.5,3,0,0),Size=UDim2.new(.5,-3,1,0)},function() for id,row in pairs(rows) do if row.Visible then draft[id]=nil end end;paint() end)
+        dialog:AddFooterButton("SelectShown",{Title="Select shown",Side="Left",Variant="Secondary",AutoDismiss=false,
+            Callback=function() for id,row in pairs(rows) do if row.Visible then draft[id]=true end end;paint() end})
+        dialog:AddFooterButton("ClearShown",{Title="Clear shown",Side="Left",Variant="Secondary",AutoDismiss=false,
+            Callback=function() for id,row in pairs(rows) do if row.Visible then draft[id]=nil end end;paint() end})
         search:GetPropertyChangedSignal("Text"):Connect(filter)
         if Library.PrimeMaterial then for _,scroll in ipairs({categories,list,detail}) do Library.PrimeMaterial:Apply(scroll) end end
         dialog:Resize();filter();paint()
@@ -245,13 +246,7 @@ function Interface.new(Library, Window)
         -- Fit short windows without letting content cover the native footer actions.
         local function resize()
             root.Size=UDim2.new(1,0,0,math.clamp(Window.MainFrame.AbsoluteSize.Y/Library.DPIScale-210,220,430));dialog:Resize()
-            local narrow=root.AbsoluteSize.X/Library.DPIScale<440
-            actions.Position=UDim2.new(0,0,1,narrow and -80 or -36)
-            actions.Size=UDim2.new(.48,-6,0,narrow and 80 or 36)
-            list.Size=UDim2.new(.48,-6,1,narrow and -182 or -138)
-            selectAll.Size=narrow and UDim2.new(1,0,0,36) or UDim2.new(.5,-3,1,0)
-            clearAll.Size=selectAll.Size
-            clearAll.Position=narrow and UDim2.fromOffset(0,44) or UDim2.new(.5,3,0,0)
+            list.Size=UDim2.new(.48,-6,1,-94)
         end
         local resizeConnection=Window.MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(resize)
         local changeConnection=info.Changed and info.Changed:Connect(function() if current and not dialog.Destroyed then focus(current) end end)

@@ -1,4 +1,4 @@
--- Imperium Frosted 0.15. Local preview; no gameplay remotes or automation.
+-- Imperium Frosted 0.16. Local preview; no gameplay remotes or automation.
 local env = (getgenv and getgenv()) or _G
 local OWNER = "ObsidianPrimeDemo"
 local function fetch(path)
@@ -99,7 +99,7 @@ local ok, err = xpcall(function()
     Layout:AddLabel("Menu key"):AddKeyPicker("PrimeMenuKey",{Default="U",Mode="Toggle",NoUI=true,Text="Menu"})
     Library.ToggleKeybind=Options.PrimeMenuKey
     Layout:AddButton({Text="Center window",Func=function() Appearance:CenterWindow() end})
-    Layout:AddDropdown("PrimeDockLocation",{Text="Capsule starting position",Values={"Top left","Top right","Bottom left","Bottom right"},Default="Top left",Callback=function(value) Appearance:SetDockPosition(value) end})
+    Layout:AddDropdown("PrimeDockLocation",{Text="Capsule starting position",Values={"Top center","Top left","Top right","Bottom left","Bottom right"},Default="Top center",Callback=function(value) Appearance:SetDockPosition(value) end})
     Layout:AddButton({Text="Move window left",Func=function() Appearance:MoveWindow(-40,0) end})
     Layout:AddButton({Text="Move window right",Func=function() Appearance:MoveWindow(40,0) end})
     Layout:AddButton({Text="Move window up",Func=function() Appearance:MoveWindow(0,-40) end})
@@ -110,7 +110,7 @@ local ok, err = xpcall(function()
     Appearance:FinishBuild()
     local rect=Window.MainFrame
     Window:SetSizePosition(nil,UDim2.fromOffset(math.max(16,(viewport.X-rect.Size.X.Offset)/2),58))
-    Appearance:SetDockPosition("Top left")
+    Appearance:SetDockPosition("Top center")
     Appearance.Dock.Position=UDim2.fromOffset(20,4)
     local elapsed,frames,cache=0,0,{}
     env.PrimeSessionStart=os.clock()
@@ -139,6 +139,6 @@ local ok, err = xpcall(function()
     end)
     record("Preview loaded; telemetry connected")
     Library.PrimePreview={Appearance=Appearance,Materials=Materials,Showcase=Showcase,Tabs={Home=Home,Fishing=Fishing,Settings=Settings}}
-    print("[Imperium Frosted 0.15] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
+    print("[Imperium Frosted 0.16] READY",Window.MainFrame.AbsoluteSize,"PID target set by Potassium")
 end,function(message) return debug.traceback(tostring(message),2) end)
 if not ok then pcall(function() Library:Unload() end);error("[Imperium Frosted] "..tostring(err),0) end

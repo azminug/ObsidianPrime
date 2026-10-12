@@ -17,6 +17,7 @@ function Cosmic.new(Library, Window)
         IsMinimized = Window.IsMinimized, Toggle = Window.Toggle, Subtitle = Window.SetMinimizedSubtitle }
     local savedPosition, savedAnchor = main.Position, main.AnchorPoint
     local scale = main:FindFirstChildOfClass("UIScale")
+    if not scale then scale=Instance.new("UIScale");scale.Parent=main end
     local groupFade = main:IsA("CanvasGroup")
     local restingScale = scale and scale.Scale or 1
     local function create(class, properties, parent)
@@ -56,16 +57,17 @@ function Cosmic.new(Library, Window)
 
     local dock = create("TextButton", { Name = "Open Imperium menu", Text = "", AutoButtonColor = false,
         BackgroundColor3 = Color3.fromRGB(35, 33, 44), BackgroundTransparency = 0.25,
-        BorderSizePixel = 0, Size = UDim2.fromOffset(256, 38), Position = UDim2.fromOffset(20, 20),
+        BorderSizePixel = 0, Size = UDim2.fromOffset(286, 44), AnchorPoint=Vector2.new(.5,0), Position = UDim2.new(.5,0,0,12),
+        ClipsDescendants=true,
         ZIndex = 30, Selectable = true }, main.Parent)
-    create("UICorner", { CornerRadius = UDim.new(1, 0) }, dock)
+    create("UICorner", { CornerRadius = UDim.new(0, 22) }, dock)
     self.Dock = dock
     local dockStroke = create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Color = Color3.fromRGB(151, 140, 164), Thickness = 1 }, dock)
     local dockScale = create("UIScale", { Scale = 1 }, dock)
     local sourceLogo=main:FindFirstChild("PrimeLogo",true)
     local dockLogo=create("ImageLabel",{Name="ImperiumCapsuleLogo",BackgroundTransparency=1,
-        Position=UDim2.fromOffset(12,7),Size=UDim2.fromOffset(24,24),ZIndex=31},dock)
+        Position=UDim2.fromOffset(12,11),Size=UDim2.fromOffset(22,22),ZIndex=31},dock)
     if sourceLogo and sourceLogo:IsA("ImageLabel") then
         for _,property in ipairs({"Image","ImageRectOffset","ImageRectSize","ImageColor3"}) do dockLogo[property]=sourceLogo[property] end
         create("UICorner",{CornerRadius=UDim.new(0,6)},dockLogo)
@@ -73,58 +75,99 @@ function Cosmic.new(Library, Window)
         local icon=Library:GetCustomIcon("sparkles")
         if icon then Library:ApplyLucideIcon(dockLogo,icon) end
     end
-    local waveform=create("Frame",{Name="ImperiumHeartbeat",BackgroundTransparency=1,
-        Position=UDim2.fromOffset(50,9),Size=UDim2.fromOffset(38,20),ZIndex=31},dock)
-    local waveSegments={}
-    for index=1,7 do
-        local line=create("Frame",{Name="PulseSegment"..index,AnchorPoint=Vector2.new(.5,.5),
-            BorderSizePixel=0,BackgroundColor3=Library.Scheme.AccentColor,ZIndex=31},waveform)
-        create("UICorner",{CornerRadius=UDim.new(1,0)},line)
-        Library.Registry[line]={BackgroundColor3="AccentColor"}
-        waveSegments[index]=line
-    end
-    local pulseTimer,pulseGeneration=nil,0
-    local random=Random.new()
-    local function wave(amplitude,duration)
-        local points={{0,10},{8,10},{12,10-amplitude*.25},{16,10+amplitude},
-            {21,10-amplitude},{25,10+amplitude*.3},{29,10},{38,10}}
-        for index,line in ipairs(waveSegments) do
-            local a,b=points[index],points[index+1]
-            local dx,dy=b[1]-a[1],b[2]-a[2]
-            animate(line,{Position=UDim2.fromOffset((a[1]+b[1])/2,(a[2]+b[2])/2),
-                Size=UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),1.5),Rotation=math.deg(math.atan2(dy,dx)),
-                BackgroundTransparency=amplitude>4 and .12 or .32},duration)
+    -- Original pixel mascot built from merged pixel runs: no remote asset or emoji font dependency.
+    local cat=create("Frame",{Name="ImperiumCat",BackgroundTransparency=1,
+        Position=UDim2.fromOffset(44,8),Size=UDim2.fromOffset(36,32),ZIndex=31},dock)
+    create("UIScale",{Scale=.875},cat)
+    local palette={o=Color3.fromRGB(91,53,38),f=Color3.fromRGB(235,158,76),
+        c=Color3.fromRGB(255,219,160),p=Color3.fromRGB(236,144,139)}
+    local pixels={
+        "..oo......oo......", "..ofo....ofo......", "..offooooffo......",
+        "..offffffffo......", ".offffffffffo.....", ".offcoffocffo.....",
+        ".offcoffocffo.....", "..offfccfffo......", "...ofcpfcfo.......",
+        "....occccooooo....", "....offfffffffo...", "....offfffffffco..",
+        "....offfffffccco..", "....offofffoffo...", "....ofo.oo.ofo....",
+        "....ooo....ooo....",
+    }
+    for row,line in ipairs(pixels) do
+        local x=1
+        while x<=#line do
+            local key=line:sub(x,x);local last=x
+            while last<#line and line:sub(last+1,last+1)==key do last=last+1 end
+            if palette[key] then
+                create("Frame",{BorderSizePixel=0,BackgroundColor3=palette[key],
+                    Position=UDim2.fromOffset((x-1)*2,(row-1)*2),Size=UDim2.fromOffset((last-x+1)*2,2),ZIndex=32},cat)
+            end
+            x=last+1
         end
+    end
+    local tail=create("Frame",{Name="CatTail",AnchorPoint=Vector2.new(.5,1),Position=UDim2.fromOffset(31,23),
+        Size=UDim2.fromOffset(8,17),BackgroundTransparency=1,ZIndex=31},cat)
+    for _,part in ipairs({{2,7,4,10},{4,3,4,7},{2,0,4,5}}) do
+        local edge=create("Frame",{BorderSizePixel=0,BackgroundColor3=palette.o,Position=UDim2.fromOffset(part[1],part[2]),Size=UDim2.fromOffset(part[3],part[4]),ZIndex=31},tail)
+        create("Frame",{BorderSizePixel=0,BackgroundColor3=palette.f,Position=UDim2.fromOffset(1,1),Size=UDim2.new(1,-2,1,-2),ZIndex=32},edge)
+    end
+    create("Frame",{Name="CapsuleDivider",BorderSizePixel=0,BackgroundColor3=Library.Scheme.FontColor,
+        BackgroundTransparency=.78,Position=UDim2.fromOffset(86,12),Size=UDim2.fromOffset(1,20),ZIndex=31},dock)
+    local pulseTimer,pulseGeneration=nil,0
+    local stride=false
+    local function wave(amplitude,duration)
+        local active=amplitude>4
+        animate(cat,{Position=UDim2.fromOffset(44,active and 6 or 8),Rotation=active and (stride and 3 or -3) or 0},duration)
+        animate(tail,{Rotation=active and (stride and 18 or -18) or 0},duration)
     end
     local function stopPulse()
         pulseGeneration=pulseGeneration+1
         if pulseTimer then task.cancel(pulseTimer);pulseTimer=nil end
-        for _,line in ipairs(waveSegments) do
-            if Spring then Spring:Cancel(line) end
-            if tweens[line] then tweens[line]:Cancel();tweens[line]=nil end
+        for _,part in ipairs({cat,tail}) do
+            if Spring then Spring:Cancel(part) end
+            if tweens[part] then tweens[part]:Cancel();tweens[part]=nil end
         end
         wave(3,0)
     end
-    wave(3,0)
-    local status = create("TextLabel", {Name="PrimeValue", BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(104, 0), Size = UDim2.new(1, -116, 1, 0),
-        Text = "-- FPS · -- ms", FontFace = Library.Scheme.Font, TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd,
+    self.Mascot,self.MascotTail=cat,tail
+    local status = create("TextLabel", {Name="ImperiumCapsuleMetrics", BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(98, 0), Size = UDim2.fromOffset(132,44),
+        Text = "-- FPS · -- ms", FontFace = Library.Scheme.Font, TextSize = 16, TextTruncate = Enum.TextTruncate.AtEnd,
         TextXAlignment = Enum.TextXAlignment.Left, TextColor3 = Library.Scheme.FontColor, ZIndex = 31 }, dock)
-    local hint = create("TextLabel", {Name="ImperiumCapsuleTooltip", BackgroundColor3 = Color3.fromRGB(35, 33, 44), BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 1, 6), Size = UDim2.fromOffset(256, 28), Text = "Open menu · Ctrl+M",
-        FontFace = Library.Scheme.Font, TextSize = 13, TextColor3 = Library.Scheme.FontColor, Visible = false, ZIndex = 32 }, dock)
-    create("UICorner", { CornerRadius = UDim.new(0, 8) }, hint)
-    for _,label in ipairs({status,hint}) do
+    local badge=create("TextLabel",{Name="ImperiumActiveCount",BackgroundColor3=Library.Scheme.AccentColor,
+        BackgroundTransparency=.78,Position=UDim2.fromOffset(236,10),Size=UDim2.fromOffset(38,24),
+        Text="0",FontFace=Library.Scheme.Font,TextSize=14,TextColor3=Library.Scheme.FontColor,ZIndex=31},dock)
+    create("UICorner",{CornerRadius=UDim.new(1,0)},badge)
+    Library.Registry[badge]={BackgroundColor3="AccentColor",TextColor3="FontColor",FontFace="Font"}
+    local hint = create("TextLabel", {Name="ImperiumCapsuleHint",BackgroundTransparency=1,
+        Position=UDim2.fromOffset(12,44),Size=UDim2.fromOffset(172,24),Text="Open · Ctrl+M",TextXAlignment=Enum.TextXAlignment.Left,
+        FontFace=Library.Scheme.Font,TextSize=12,TextColor3=Library.Scheme.FontColor,
+        TextTransparency=1,Visible=true,ZIndex=31,TextTruncate=Enum.TextTruncate.AtEnd},dock)
+    badge.TextXAlignment=Enum.TextXAlignment.Right
+    create("UIPadding",{PaddingRight=UDim.new(0,8)},badge)
+    local activityDot=create("Frame",{Name="ActiveDot",BorderSizePixel=0,BackgroundColor3=Color3.fromRGB(101,207,135),
+        Position=UDim2.fromOffset(7,8),Size=UDim2.fromOffset(8,8),ZIndex=32},badge)
+    create("UICorner",{CornerRadius=UDim.new(1,0)},activityDot)
+    local dragHint=create("TextLabel",{Name="ImperiumDragHint",BackgroundTransparency=1,Position=UDim2.fromOffset(194,44),
+        Size=UDim2.fromOffset(80,24),Text="Drag to move",FontFace=Library.Scheme.Font,TextSize=11,
+        TextColor3=Library.Scheme.FontColor,TextTransparency=1,ZIndex=31,TextXAlignment=Enum.TextXAlignment.Right},dock)
+    self.DragHint=dragHint
+    self.ActiveBadge=badge
+    function self:SetActiveCount(count)
+        count=math.max(0,math.floor(tonumber(count) or 0))
+        self.ActiveCount=count
+        badge.Text=count>99 and "99+" or tostring(count)
+        badge:SetAttribute("ActiveAutomations",count)
+    end
+    for _,label in ipairs({status,hint,dragHint}) do
         Library.Registry[label]={FontFace=function() return Font.new(Library.Scheme.Font.Family,Enum.FontWeight.Regular,Library.Scheme.Font.Style) end,
             TextColor3="FontColor"}
         label.FontFace=Library.Registry[label].FontFace()
     end
-    self.DockLogo,self.Waveform,self.TelemetryLabel,self.Hint=dockLogo,waveform,status,hint
+    Library.Registry[status].FontFace=function() return Font.new(Library.Scheme.Font.Family,Enum.FontWeight.SemiBold,Library.Scheme.Font.Style) end
+    status.FontFace=Library.Registry[status].FontFace()
+    self.DockLogo,self.TelemetryLabel,self.Hint=dockLogo,status,hint
     local details
     if Window.MinimizedBody then
         details=create("Frame",{Name="ImperiumCapsuleDetails",BackgroundColor3=Library.Scheme.MainColor,
             BackgroundTransparency=.2,BorderSizePixel=0,AutomaticSize=Enum.AutomaticSize.Y,
-            Position=UDim2.new(0,0,1,6),Size=UDim2.fromOffset(320,0),Visible=false,ZIndex=32},dock)
+            Position=UDim2.new(0,0,1,6),Size=UDim2.fromOffset(320,0),Visible=false,ZIndex=32},main.Parent)
         create("UICorner",{CornerRadius=UDim.new(0,12)},details)
         create("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4)},details)
         Window.MinimizedBody.Parent=details
@@ -133,12 +176,37 @@ function Cosmic.new(Library, Window)
             subtitle.Parent=details;subtitle.LayoutOrder=0;subtitle.Size=UDim2.new(1,-24,0,24);subtitle.TextTransparency=.05
         end
         self.Details=details
+        local function placeDetails()
+            details.Position=UDim2.fromOffset(dock.AbsolutePosition.X-main.Parent.AbsolutePosition.X,
+                dock.AbsolutePosition.Y-main.Parent.AbsolutePosition.Y+dock.AbsoluteSize.Y+6)
+        end
+        bind(dock:GetPropertyChangedSignal("AbsolutePosition"),placeDetails)
+        bind(dock:GetPropertyChangedSignal("AbsoluteSize"),placeDetails)
+        placeDetails()
     end
+    local capsuleWidth=286
+    local function fitCapsule()
+        local textWidth=math.clamp(math.ceil(status.TextBounds.X),90,150)
+        -- Keep only an 8px gap after the rendered metrics, rather than a fixed empty column.
+        local badgeX=98+textWidth+8
+        badge.Position=UDim2.fromOffset(badgeX,10)
+        capsuleWidth=badgeX+38+12
+        dock.Size=UDim2.fromOffset(capsuleWidth,dock.Size.Y.Offset)
+        hint.Size=UDim2.fromOffset(capsuleWidth-104,24)
+        dragHint.Position=UDim2.fromOffset(capsuleWidth-92,44)
+        dragHint.Size=UDim2.fromOffset(80,24)
+    end
+    bind(status:GetPropertyChangedSignal("TextBounds"),fitCapsule)
+    fitCapsule()
     local function hover(value,mouse)
-        hint.Visible = value and mouse==true and Input.MouseEnabled and Input.KeyboardEnabled and Library.Toggled and not (details and details.Visible)
-        animate(dockScale, { Scale = value and 1.025 or 1 }, 0.16)
+        local expanded=value and mouse==true and Input.MouseEnabled and Input.KeyboardEnabled and Library.Toggled
+        self.HoverExpanded=expanded
+        animate(dock,{Size=UDim2.fromOffset(capsuleWidth,expanded and 74 or 44)},.24)
+        animate(hint,{TextTransparency=expanded and 0 or 1},.18)
+        animate(dragHint,{TextTransparency=expanded and .25 or 1},.18)
         animate(dockStroke, { Color = value and Color3.fromRGB(221, 183, 219) or Color3.fromRGB(151, 140, 164) }, 0.16)
     end
+    self.SetCapsuleHover=function(_,value) hover(value,true) end
     bind(dock.MouseEnter, function() hover(true,true) end)
     bind(dock.MouseLeave, function() hover(false) end)
     bind(dock.SelectionGained, function() hover(true) end)
@@ -180,8 +248,7 @@ function Cosmic.new(Library, Window)
         mini.Visible = false
         dock.Visible = Library.Toggled
         if details then details.Visible=Library.Toggled and self.Minimized and (Window.MinimizedBody.Visible or self.ExplicitSubtitle==true) end
-        hint.Visible = false
-        if not dock.Visible then stopPulse() end
+        if not dock.Visible then hover(false);stopPulse() end
     end
     bind(mini:GetPropertyChangedSignal("Visible"), syncShell)
     bind(main:GetPropertyChangedSignal("Visible"), syncShell)
@@ -216,18 +283,33 @@ function Cosmic.new(Library, Window)
         self.Minimized, self.Transition = value, true
         syncShell()
         if self.ReducedMotion or not Library.Toggled then finish(value, generation); return end
+        -- Animate the actual window around the capsule center, preserving its expanded geometry.
+        local parentOrigin=main.Parent.AbsolutePosition
+        local dockCenter=dock.AbsolutePosition+Vector2.new(dock.AbsoluteSize.X/2,22)-parentOrigin
+        local fullSize=Vector2.new(main.Size.X.Offset,main.Size.Y.Offset)*restingScale
+        local ratio=math.clamp(dock.AbsoluteSize.X/math.max(1,fullSize.X),.08,.42)
+        local collapsedSize=fullSize*ratio
+        local target=UDim2.fromOffset(dockCenter.X+(savedAnchor.X-.5)*collapsedSize.X,
+            dockCenter.Y+(savedAnchor.Y-.5)*collapsedSize.Y)
+        self.MorphOrigin=dockCenter
         if value then
-            if groupFade then animate(main, {GroupTransparency=1}, 0.18) end
-            animate(main, { Position = savedPosition + UDim2.fromOffset(0, 16) }, 0.18)
-            if scale then animate(scale, { Scale = restingScale * 0.94 }, 0.18) end
+            if groupFade then animate(main,{GroupTransparency=1},.3) end
+            animate(main,{Position=target},.3)
+            animate(scale,{Scale=restingScale*ratio},.3)
         else
-            old.Minimize(Window, false)
-            if groupFade then main.GroupTransparency=1;animate(main,{GroupTransparency=0},0.2) end
-            main.Position, main.AnchorPoint = savedPosition + UDim2.fromOffset(0, 16), savedAnchor
-            if scale then scale.Scale = restingScale * 0.94; animate(scale, { Scale = restingScale }, 0.2) end
-            animate(main, { Position = savedPosition }, 0.2)
+            local currentPosition,currentScale=main.Position,scale.Scale
+            old.Minimize(Window,false)
+            if wasTransition then main.Position=currentPosition;scale.Scale=currentScale end
+            if not wasTransition then
+                main.Position,main.AnchorPoint=target,savedAnchor
+                scale.Scale=restingScale*ratio
+                if groupFade then main.GroupTransparency=1 end
+            end
+            if groupFade then animate(main,{GroupTransparency=0},.3) end
+            animate(main,{Position=savedPosition},.3)
+            animate(scale,{Scale=restingScale},.3)
         end
-        task.delay(0.38, function() finish(value, generation) end)
+        task.delay(.55,function() finish(value,generation) end)
     end
     Window.ToggleMinimized = function() Window:SetMinimized(not self.Minimized) end
     Window.Toggle = function(_, value)
@@ -245,7 +327,7 @@ function Cosmic.new(Library, Window)
         self.Status = text and text ~= "" and text or "Ready"
         self.ExplicitSubtitle=text~=nil and text~=""
         syncShell()
-        hint.Text = "Open menu · Ctrl+M"
+        hint.Text = "Open · Ctrl+M"
     end
     local dragInput, dragStart, dragPosition, dragged, suppressUntil = nil, nil, nil, false, 0
     bind(dock.InputBegan, function(input)
@@ -261,7 +343,7 @@ function Cosmic.new(Library, Window)
         local delta = input.Position - dragStart
         if delta.Magnitude > 5 then dragged = true end
         if not dragged then return end
-        hint.Visible = false
+        hint.TextTransparency = 1
         local target = dragPosition + UDim2.fromOffset(delta.X, delta.Y)
         local viewport = workspace.CurrentCamera.ViewportSize
         local x = target.X.Scale * viewport.X + target.X.Offset - dock.AnchorPoint.X * dock.AbsoluteSize.X
@@ -278,7 +360,7 @@ function Cosmic.new(Library, Window)
     end)
     connections[#connections + 1] = Library:OnActivate(dock, function()
         if dragged or os.clock() < suppressUntil then dragged = false; return end
-        hint.Visible=false
+        hover(false)
         Window:SetMinimized(false)
     end)
     function self:SetTelemetry(fps, ping)
@@ -289,8 +371,9 @@ function Cosmic.new(Library, Window)
         if pulseTimer then task.cancel(pulseTimer);pulseTimer=nil end
         pulseGeneration=pulseGeneration+1
         local generation=pulseGeneration
-        wave(random:NextNumber(5.5,8.5),.16)
-        pulseTimer=task.delay(random:NextNumber(.17,.25),function()
+        stride=not stride
+        wave(7,.20)
+        pulseTimer=task.delay(.24,function()
             pulseTimer=nil
             if self.Alive and generation==pulseGeneration and dock.Visible and not self.ReducedMotion then wave(3,.35) end
         end)
@@ -437,7 +520,13 @@ function Cosmic.new(Library, Window)
     function self:CenterWindow()
         if self.Transition then return end
         local size = main.AbsoluteSize
-        Window:SetSizePosition(nil, UDim2.new(0.5, -size.X / 2, 0.5, -size.Y / 2))
+        local viewport=main.Parent.AbsoluteSize
+        local top=math.max(64,(viewport.Y-size.Y)/2)
+        if size.Y>viewport.Y-76 then
+            Window:SetSizePosition(UDim2.fromOffset(main.Size.X.Offset,math.max(180,(viewport.Y-76)/Library.DPIScale)))
+            size=main.AbsoluteSize
+        end
+        Window:SetSizePosition(nil, UDim2.new(.5,-size.X/2,0,top))
         savedPosition, savedAnchor = main.Position, main.AnchorPoint
     end
     function self:MoveWindow(dx, dy)
@@ -454,7 +543,9 @@ function Cosmic.new(Library, Window)
         local bottom = value == "Bottom left" or value == "Bottom right"
         dock.AnchorPoint = Vector2.new(right and 1 or 0, bottom and 1 or 0)
         dock.Position = UDim2.new(right and 1 or 0, right and -20 or 20, bottom and 1 or 0, bottom and -20 or 20)
-        hint.Position = bottom and UDim2.fromOffset(0, -38) or UDim2.new(0, 0, 1, 6)
+        if value=="Top center" then
+            dock.AnchorPoint=Vector2.new(.5,0);dock.Position=UDim2.new(.5,0,0,12)
+        end
     end
 
     -- Keyboard navigation uses the same registered callbacks, not simulated mouse input.
@@ -489,7 +580,7 @@ function Cosmic.new(Library, Window)
         if not Library.Toggled then return end
         local textbox = Input:GetFocusedTextBox()
         if input.KeyCode == Enum.KeyCode.Escape then
-            hint.Visible = false
+            hint.TextTransparency = 1
             if textbox then textbox:ReleaseFocus() end
             focused = nil; focus.Visible = false
             return
@@ -535,7 +626,7 @@ function Cosmic.new(Library, Window)
     bind(main:GetPropertyChangedSignal("Visible"), updateFocus)
     self:SetOpaque(false)
     self:SetShadow("None")
-    self:SetDockPosition("Top left")
+    self:SetDockPosition("Top center")
     syncShell()
     Library:OnUnload(function()
         self.Alive = false
